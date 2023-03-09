@@ -40,6 +40,7 @@ class Quickmove(QObject):
         self.ui.check_box_open_next.clicked.connect(self.check_auto_open)
         self.ui.button_cancel_remove.clicked.connect(self.cancel_remove)
         self.ui.line_edit_path_old.textChanged.connect(self.auto_old_path_input_save)
+        self.ui.button_pass.clicked.connect(lambda: self.pass_this_time())
 
     def resizeEvent(self, event):  # 重设方法
         self.setFixedSize(event.oldSize())  # 禁止改变窗口大小
@@ -212,22 +213,35 @@ class Quickmove(QObject):
             elif model == 'folder':
                 os.startfile(need_moves[self.file_number] + "/" + natsorted(os.listdir(need_moves[self.file_number]))[0])  # 如果是文件夹则打开文件夹里面的第一个文件
 
+    def pass_this_time(self):
+        """跳过本次文件"""
+        self.file_number += 1
+        self.ui.label_show_file.setText(os.path.split(need_moves[self.file_number])[1])
+        if auto_open == "True":  # 检查勾选框状态
+            if model == 'file':
+                os.startfile(need_moves[self.file_number])
+            elif model == 'folder':
+                os.startfile(need_moves[self.file_number] + "/" + natsorted(os.listdir(need_moves[self.file_number]))[
+                    0])  # 如果是文件夹则打开文件夹里面的第一个文件
+
     def cancel_remove(self):
         """撤销移动"""
-        if self.file_number > 0:  # 判断移动几个文件了，防止超出限制
-            self.file_number -= 1
-            if os.path.split(self.file_number_with_new_full_path[self.file_number])[1] != os.path.split(need_moves[self.file_number])[1]:  # 如果两边提取的文件名不同，则说明有过改名操作
-                shutil.move(self.file_number_with_new_full_path[self.file_number], folder_old)  # 先移回去再改名
-                os.renames(folder_old + '/' + os.path.split(self.file_number_with_new_full_path[self.file_number])[1], need_moves[self.file_number])
+        try:
+            if self.file_number > 0:  # 判断移动几个文件了，防止超出限制
+                self.file_number -= 1
+                if os.path.split(self.file_number_with_new_full_path[self.file_number])[1] != os.path.split(need_moves[self.file_number])[1]:  # 如果两边提取的文件名不同，则说明有过改名操作
+                    shutil.move(self.file_number_with_new_full_path[self.file_number], folder_old)  # 先移回去再改名
+                    os.renames(folder_old + '/' + os.path.split(self.file_number_with_new_full_path[self.file_number])[1], need_moves[self.file_number])
+                else:
+                    shutil.move(self.file_number_with_new_full_path[self.file_number], folder_old)
+                self.ui.text_info.insertHtml(
+                    "<br>" + "<font color='purple' size='3'>" + self.get_time() + "</font>" + "<font color='blue' size='3'>" + " 撤销移动：" + "</font>" + "<font color='green' size='3'>" +
+                    os.path.split(self.file_number_with_new_full_path[self.file_number])[1] + "</font>")
+                self.file_number_with_new_full_path.pop(self.file_number)
             else:
-                shutil.move(self.file_number_with_new_full_path[self.file_number], folder_old)
-            self.ui.text_info.insertHtml(
-                "<br>" + "<font color='purple' size='3'>" + self.get_time() + "</font>" + "<font color='blue' size='3'>" + " 撤销移动：" + "</font>" + "<font color='green' size='3'>" +
-                os.path.split(self.file_number_with_new_full_path[self.file_number])[1] + "</font>")
-            # self.ui.text_info.insertHtml("<br>" + self.get_time() + " 撤销移动： " + os.path.split(self.file_number_with_new_full_path[self.file_number])[1])
-            self.file_number_with_new_full_path.pop(self.file_number)
-        else:
-            self.ui.text_info.insertHtml("<font color='red' size='3'>" + "<br>" + "没有可以撤销移动的文件/文件夹" + "</font>")
+                self.ui.text_info.insertHtml("<font color='red' size='3'>" + "<br>" + "没有可以撤销移动的文件/文件夹" + "</font>")
+        except KeyError:
+            self.ui.text_info.insertHtml("<font color='pink' size='3'>" + "<br>" + "已撤回跳过操作" + "</font>")
         self.ui.label_show_file.setText(os.path.split(need_moves[self.file_number])[1])  # 显示撤回的文件
         if auto_open == "True":  # 检查勾选框状态
             if model == 'file':
@@ -290,9 +304,9 @@ class Quickmove(QObject):
         self.folders = []  # 存放识别到的文件夹
         self.file_number_with_new_full_path = dict()  # 存放空字典，用于存放新文件夹有重复后改名的文件信息
 
-        path_travel = os.listdir(folder_old)  # 遍历后的文件路径
+        path_travel = os.listdir(config.get(show_config, "folder_old"))  # 遍历后的文件路径
         for i in path_travel:  # for循环遍历
-            full_path = folder_old + "/" + i   # 组合完整文件名
+            full_path = config.get(show_config, "folder_old") + "/" + i   # 组合完整文件名
             if os.path.isdir(full_path):       # 判断是否是文件夹，放入对应列表
                 self.folders.append(full_path)
             else:
