@@ -146,29 +146,6 @@
     </item>
    </layout>
   </widget>
-  <widget class="QSplitter" name="splitter">
-   <property name="geometry">
-    <rect>
-     <x>11</x>
-     <y>436</y>
-     <width>141</width>
-     <height>31</height>
-    </rect>
-   </property>
-   <property name="orientation">
-    <enum>Qt::Horizontal</enum>
-   </property>
-   <widget class="QPushButton" name="button_cancel_remove">
-    <property name="text">
-     <string>撤销移动</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="button_quit">
-    <property name="text">
-     <string>退出程序</string>
-    </property>
-   </widget>
-  </widget>
   <widget class="QSplitter" name="splitter_2">
    <property name="geometry">
     <rect>
@@ -353,6 +330,34 @@
    <property name="text">
     <string>当前文件/文件夹：</string>
    </property>
+  </widget>
+  <widget class="QSplitter" name="splitter">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>440</y>
+     <width>251</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+   <widget class="QPushButton" name="button_pass">
+    <property name="text">
+     <string>跳过</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="button_cancel_remove">
+    <property name="text">
+     <string>撤销移动</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="button_quit">
+    <property name="text">
+     <string>退出程序</string>
+    </property>
+   </widget>
   </widget>
  </widget>
  <resources/>
