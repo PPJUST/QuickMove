@@ -7,10 +7,9 @@ from PySide2.QtCore import QObject, Qt
 import datetime
 import sys
 import shutil
-from natsort import natsorted
+import natsort
 import configparser
 import random
-from pypinyin import lazy_pinyin
 
 
 class Quickmove(QObject):
@@ -24,6 +23,7 @@ class Quickmove(QObject):
         for i in config.sections():  # 初始设置一次配置文件下拉框
             self.ui.combobox_select_config.addItem(i)
         self.ui.combobox_select_config.setCurrentText(config.get('DEFAULT', 'show_config'))
+        self.where_is_now = ''
 
         # 信号与槽函数连接
         self.ui.button_create_new_config.clicked.connect(self.config_create)
@@ -198,31 +198,32 @@ class Quickmove(QObject):
             self.file_number += 1
             try:
                 self.ui.label_show_file.setText(os.path.split(need_moves[self.file_number])[1])
+                self.show_where_is_now()
             except IndexError:  # 超限说明已经移动完全部文件
                 self.ui.label_show_file.setText('已完成全部文件的移动')
+                self.show_where_is_now()
             self.ui.text_info.insertHtml(
                 "<br>" + "<font color='purple' size='3'>" + self.get_time() + "</font>" + " 完成文件移动：" + "<font color='green' size='3'>" +
                 os.path.split(need_moves[self.file_number - 1])[
                     1] + "</font>" + " >>> " + "<font color='orange' size='3'>" + config.get(show_config,
                                                                                              f'folder_new_{move_folder_number}') + "</font>")
-        # self.ui.text_info.insertHtml("<br>" + self.get_time() + "完成文件移动： " + os.path.split(need_moves[self.file_number - 1])[1] + " >>> " + config.get(show_config, f'folder_new_{move_folder_number}'))
         # 是否自动打开下一个文件
         if auto_open == "True":  # 检查勾选框状态
             if model == 'file':
                 os.startfile(need_moves[self.file_number])
             elif model == 'folder':
-                os.startfile(need_moves[self.file_number] + "/" + natsorted(os.listdir(need_moves[self.file_number]))[0])  # 如果是文件夹则打开文件夹里面的第一个文件
+                os.startfile(need_moves[self.file_number] + "/" + natsort.natsorted(os.listdir(need_moves[self.file_number]), key=sort_key, alg=natsort.ns.F | natsort.ns.IC | natsort.ns.PATH)[0])  # 如果是文件夹则打开文件夹里面的第一个文件
 
     def pass_this_time(self):
         """跳过本次文件"""
         self.file_number += 1
         self.ui.label_show_file.setText(os.path.split(need_moves[self.file_number])[1])
+        self.show_where_is_now()
         if auto_open == "True":  # 检查勾选框状态
             if model == 'file':
                 os.startfile(need_moves[self.file_number])
             elif model == 'folder':
-                os.startfile(need_moves[self.file_number] + "/" + natsorted(os.listdir(need_moves[self.file_number]))[
-                    0])  # 如果是文件夹则打开文件夹里面的第一个文件
+                os.startfile(need_moves[self.file_number] + "/" + natsort.natsorted(os.listdir(need_moves[self.file_number]), key=sort_key, alg=natsort.ns.F | natsort.ns.IC | natsort.ns.PATH)[0])  # 如果是文件夹则打开文件夹里面的第一个文件
 
     def cancel_remove(self):
         """撤销移动"""
@@ -243,11 +244,12 @@ class Quickmove(QObject):
         except KeyError:
             self.ui.text_info.insertHtml("<font color='pink' size='3'>" + "<br>" + "已撤回跳过操作" + "</font>")
         self.ui.label_show_file.setText(os.path.split(need_moves[self.file_number])[1])  # 显示撤回的文件
+        self.show_where_is_now()
         if auto_open == "True":  # 检查勾选框状态
             if model == 'file':
                 os.startfile(need_moves[self.file_number])
             elif model == 'folder':
-                os.startfile(need_moves[self.file_number] + "/" + natsorted(os.listdir(need_moves[self.file_number]))[0])  # 如果是文件夹则打开文件夹里面的第一个文件
+                os.startfile(need_moves[self.file_number] + "/" + natsort.natsorted(os.listdir(need_moves[self.file_number]), key=sort_key, alg=natsort.ns.F | natsort.ns.IC | natsort.ns.PATH)[0])  # 如果是文件夹则打开文件夹里面的第一个文件
 
     def auto_new_path_input_save(self):
         """手工输入文件路径后自动更新配置文件"""
@@ -311,32 +313,11 @@ class Quickmove(QObject):
                 self.folders.append(full_path)
             else:
                 self.files.append(full_path)
-        # 排序 natsorted+pypinyin结合使用，先转换为一一对应的字典，排序后再转回来
-        dict_files_py = dict()  # 用于存放对应拼音
-        list_files_py = list()  # 用于存放对应拼音
-        list_files_new = list()  # 用于转换
-        dict_folders_py = dict()
-        list_folders_py = list()
-        list_folders_new = list()  # 用于转换
-        for i in self.files:
-            i_py = "".join(lazy_pinyin(i)).lower()
-            list_files_py.append(i_py)  # 挪到新列表里处理
-            dict_files_py[i_py] = i  # key-转小写拼音 value-原名
-        list_files_py = natsorted(list_files_py)
-        for i_py in list_files_py:  # 将拼音返回原名
-            list_files_new.append(dict_files_py[i_py])
-        self.files = list_files_new  # 将最后的排序结果赋值
-        for i in self.folders:
-            i_py = "".join(lazy_pinyin(i)).lower()
-            list_folders_py.append(i_py)  # 挪到新列表里处理
-            dict_folders_py[i_py] = i  # key-转小写拼音 value-原名
-        list_folders_py = natsorted(list_folders_py)
-        for i_py in list_folders_py:  # 将拼音返回原名
-            list_folders_new.append(dict_folders_py[i_py])
-        self.folders = list_folders_new  # 将最后的排序结果赋值
-        # 一开始的排序方法，中文排序有问题，放弃使用
-        # self.files = natsorted(self.files, key=lambda x: x.lower())     # 在natsorted中加入参数使之忽略大小写影响
-        # self.folders = natsorted(self.folders, key=lambda x: x.lower())  # 在natsorted中加入参数使之忽略大小写影响
+        # 对获得的列表进行更好的排序
+        global sort_key  # 全局，方便后续使用
+        sort_key = natsort.natsort_keygen()
+        self.folders = natsort.natsorted(self.folders, key=sort_key, alg=natsort.ns.F | natsort.ns.IC | natsort.ns.PATH)
+        self.files = natsort.natsorted(self.files, key=sort_key, alg=natsort.ns.F | natsort.ns.IC | natsort.ns.PATH)
 
         global need_moves
         # 确认要移动的文件类型
@@ -347,6 +328,7 @@ class Quickmove(QObject):
         # 先显示第一个文件
         try:
             self.ui.label_show_file.setText(os.path.split(need_moves[0])[1])
+            self.show_where_is_now()
         except IndexError:
             self.ui.text_info.insertHtml("<font color='red' size='3'>" + "<br>" + "当前路径没有文件/文件夹" + "</font>")
 
@@ -355,11 +337,11 @@ class Quickmove(QObject):
             if model == 'file':
                 os.startfile(need_moves[0])
             elif model == 'folder':
-                os.startfile(need_moves[0] + "/" + natsorted(os.listdir(need_moves[0]))[0])  # 如果是文件夹则打开文件夹里面的第一个文件
+                os.startfile(need_moves[0] + "/" + natsort.natsorted(os.listdir(need_moves[0]), key=sort_key, alg=natsort.ns.F | natsort.ns.IC | natsort.ns.PATH)[0])  # 如果是文件夹则打开文件夹里面的第一个文件
 
     def get_time(self):
         """获取当前时间"""
-        tm = str(datetime.datetime.now())[:-7].replace(':', '.') + ":"
+        tm = str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         return tm
 
     def quit_button(self):
@@ -407,6 +389,14 @@ class Quickmove(QObject):
         config.set(show_config, 'folder_number', new_number)
         config.write(open('config.ini', 'w', encoding='utf-8'))
         self.config_load()
+
+    def show_where_is_now(self):
+        """在当前文件/当前文件夹后添加标识（1/10）"""
+        if self.file_number == len(need_moves):
+            self.where_is_now = f"当前文件/文件夹：（{str(self.file_number)}/{str(len(need_moves))}）"
+        else:
+            self.where_is_now = f'当前文件/文件夹：（{str(self.file_number + 1)}/{str(len(need_moves))}）'
+        self.ui.label_2.setText(str(self.where_is_now))
 
 
 def main():
