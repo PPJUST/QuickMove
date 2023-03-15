@@ -4,12 +4,34 @@ from tkinter import filedialog, simpledialog
 from PySide2.QtWidgets import QApplication, QPushButton, QHBoxLayout, QLineEdit, QToolButton
 from PySide2.QtUiTools import QUiLoader
 from PySide2.QtCore import QObject, Qt
+from PySide2.QtGui import QDragEnterEvent, QDropEvent
 import datetime
 import sys
 import shutil
 import natsort
 import configparser
 import random
+import locale
+
+
+# 自定义MyLineEdit类，继承自QLineEdit
+class MyLineEdit(QLineEdit):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setAcceptDrops(True)  # 设置可拖入
+
+    def dragEnterEvent(self, event: QDragEnterEvent):
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+
+    def dropEvent(self, event: QDropEvent):
+        urls = event.mimeData().urls()
+        if urls:
+            path = urls[0].toLocalFile()  # 获取路径
+            if os.path.isdir(path):
+                self.setText(path)
+            elif os.path.isfile(path):
+                self.setText(os.path.split(path)[0])
 
 
 class Quickmove(QObject):
@@ -19,11 +41,21 @@ class Quickmove(QObject):
 
         # 初始化
         self.ui.setFixedSize(576, 482)  # 设置窗口大小，用于固定大小
+
+        # 替换line edit为MyLineEdit
+        self.ui.my_line_edit_path_old = MyLineEdit()  # 新建控件
+        self.ui.my_line_edit_path_old.setObjectName('my_line_edit_path_old')
+        self.ui.horizontalLayout.removeWidget(self.ui.line_edit_path_old)  # 删除原控件
+        self.ui.line_edit_path_old.deleteLater()  # 清空内存
+        self.ui.horizontalLayout.insertWidget(1, self.ui.my_line_edit_path_old)  # 插入新控件
+
         self.config_load()
         for i in config.sections():  # 初始设置一次配置文件下拉框
             self.ui.combobox_select_config.addItem(i)
         self.ui.combobox_select_config.setCurrentText(config.get('DEFAULT', 'show_config'))
-        self.where_is_now = ''
+        global sort_key  # 用于排序
+        sort_key = natsort.natsort_keygen()  # 用于排序
+        locale.setlocale(locale.LC_ALL, '')  # 用于排序
 
         # 信号与槽函数连接
         self.ui.button_create_new_config.clicked.connect(self.config_create)
@@ -39,7 +71,7 @@ class Quickmove(QObject):
         self.ui.radio_button_folder.clicked.connect(self.check_model)
         self.ui.check_box_open_next.clicked.connect(self.check_auto_open)
         self.ui.button_cancel_remove.clicked.connect(self.cancel_remove)
-        self.ui.line_edit_path_old.textChanged.connect(self.auto_old_path_input_save)
+        self.ui.my_line_edit_path_old.textChanged.connect(self.auto_old_path_input_save)
         self.ui.button_pass.clicked.connect(lambda: self.pass_this_time())
 
     def resizeEvent(self, event):  # 重设方法
@@ -93,7 +125,7 @@ class Quickmove(QObject):
         # 修改配置文件下拉框
         self.ui.combobox_select_config.setCurrentText(config.get('DEFAULT', 'show_config'))
         # 修改原文件夹
-        self.ui.line_edit_path_old.setText(folder_old)
+        self.ui.my_line_edit_path_old.setText(folder_old)
         # 修改模式
         if model == 'file':
             self.ui.radio_button_file.setChecked(True)
@@ -149,7 +181,7 @@ class Quickmove(QObject):
             self.ui.name_layout_group.addWidget(self.ui.move_button)  # 将按钮添加到布局中
             self.ui.move_button.clicked.connect(self.auto_move_button)  # 所有的按钮都会链接到一个槽函数，可以在槽函数中判断每个按钮独立的属性来进行不同的操作
 
-            self.ui.move_line_edit = QLineEdit()  # 创建一个文本框
+            self.ui.move_line_edit = MyLineEdit()  # 创建一个文本框
             self.ui.move_line_edit.setObjectName(f'line_edit_move_{i}')  # 按钮设置控件名
             self.ui.move_line_edit.setText(config.get(show_config, f'folder_new_{i}'))  # 设置文本
             self.ui.name_layout_group.addWidget(self.ui.move_line_edit)  # 将按钮添加到布局中
@@ -212,7 +244,7 @@ class Quickmove(QObject):
             if model == 'file':
                 os.startfile(need_moves[self.file_number])
             elif model == 'folder':
-                os.startfile(need_moves[self.file_number] + "/" + natsort.natsorted(os.listdir(need_moves[self.file_number]), key=sort_key, alg=natsort.ns.F | natsort.ns.IC | natsort.ns.PATH)[0])  # 如果是文件夹则打开文件夹里面的第一个文件
+                os.startfile(need_moves[self.file_number] + "/" + natsort.natsorted(os.listdir(need_moves[self.file_number]), key=sort_key, alg=natsort.ns.LOCALE | natsort.ns.IC | natsort.ns.PATH | natsort.ns.COMPATIBILITYNORMALIZE)[0])  # 如果是文件夹则打开文件夹里面的第一个文件
 
     def pass_this_time(self):
         """跳过本次文件"""
@@ -223,7 +255,7 @@ class Quickmove(QObject):
             if model == 'file':
                 os.startfile(need_moves[self.file_number])
             elif model == 'folder':
-                os.startfile(need_moves[self.file_number] + "/" + natsort.natsorted(os.listdir(need_moves[self.file_number]), key=sort_key, alg=natsort.ns.F | natsort.ns.IC | natsort.ns.PATH)[0])  # 如果是文件夹则打开文件夹里面的第一个文件
+                os.startfile(need_moves[self.file_number] + "/" + natsort.natsorted(os.listdir(need_moves[self.file_number]), key=sort_key, alg=natsort.ns.LOCALE | natsort.ns.IC | natsort.ns.PATH | natsort.ns.COMPATIBILITYNORMALIZE)[0])  # 如果是文件夹则打开文件夹里面的第一个文件
 
     def cancel_remove(self):
         """撤销移动"""
@@ -249,7 +281,7 @@ class Quickmove(QObject):
             if model == 'file':
                 os.startfile(need_moves[self.file_number])
             elif model == 'folder':
-                os.startfile(need_moves[self.file_number] + "/" + natsort.natsorted(os.listdir(need_moves[self.file_number]), key=sort_key, alg=natsort.ns.F | natsort.ns.IC | natsort.ns.PATH)[0])  # 如果是文件夹则打开文件夹里面的第一个文件
+                os.startfile(need_moves[self.file_number] + "/" + natsort.natsorted(os.listdir(need_moves[self.file_number]), key=sort_key, alg=natsort.ns.LOCALE | natsort.ns.IC | natsort.ns.PATH | natsort.ns.COMPATIBILITYNORMALIZE)[0])  # 如果是文件夹则打开文件夹里面的第一个文件
 
     def auto_new_path_input_save(self):
         """手工输入文件路径后自动更新配置文件"""
@@ -260,7 +292,7 @@ class Quickmove(QObject):
 
     def auto_old_path_input_save(self):
         """手工输入文件路径后自动更新配置文件"""
-        old_path = self.ui.line_edit_path_old.text()
+        old_path = self.ui.my_line_edit_path_old.text()
         config.set(show_config, 'folder_old', old_path)
         config.write(open('config.ini', 'w', encoding='utf-8'))
 
@@ -314,10 +346,8 @@ class Quickmove(QObject):
             else:
                 self.files.append(full_path)
         # 对获得的列表进行更好的排序
-        global sort_key  # 全局，方便后续使用
-        sort_key = natsort.natsort_keygen()
-        self.folders = natsort.natsorted(self.folders, key=sort_key, alg=natsort.ns.F | natsort.ns.IC | natsort.ns.PATH)
-        self.files = natsort.natsorted(self.files, key=sort_key, alg=natsort.ns.F | natsort.ns.IC | natsort.ns.PATH)
+        self.folders = natsort.natsorted(self.folders, key=sort_key, alg=natsort.ns.LOCALE | natsort.ns.IC | natsort.ns.PATH | natsort.ns.COMPATIBILITYNORMALIZE)
+        self.files = natsort.natsorted(self.files, key=sort_key, alg=natsort.ns.LOCALE | natsort.ns.IC | natsort.ns.PATH | natsort.ns.COMPATIBILITYNORMALIZE)
 
         global need_moves
         # 确认要移动的文件类型
@@ -337,7 +367,7 @@ class Quickmove(QObject):
             if model == 'file':
                 os.startfile(need_moves[0])
             elif model == 'folder':
-                os.startfile(need_moves[0] + "/" + natsort.natsorted(os.listdir(need_moves[0]), key=sort_key, alg=natsort.ns.F | natsort.ns.IC | natsort.ns.PATH)[0])  # 如果是文件夹则打开文件夹里面的第一个文件
+                os.startfile(need_moves[0] + "/" + natsort.natsorted(os.listdir(need_moves[0]), key=sort_key, alg=natsort.ns.LOCALE | natsort.ns.IC | natsort.ns.PATH | natsort.ns.COMPATIBILITYNORMALIZE)[0])  # 如果是文件夹则打开文件夹里面的第一个文件
 
     def get_time(self):
         """获取当前时间"""
@@ -393,10 +423,10 @@ class Quickmove(QObject):
     def show_where_is_now(self):
         """在当前文件/当前文件夹后添加标识（1/10）"""
         if self.file_number == len(need_moves):
-            self.where_is_now = f"当前文件/文件夹：（{str(self.file_number)}/{str(len(need_moves))}）"
+            where_is_now = f"当前文件/文件夹：（{str(self.file_number)}/{str(len(need_moves))}）"
         else:
-            self.where_is_now = f'当前文件/文件夹：（{str(self.file_number + 1)}/{str(len(need_moves))}）'
-        self.ui.label_2.setText(str(self.where_is_now))
+            where_is_now = f'当前文件/文件夹：（{str(self.file_number + 1)}/{str(len(need_moves))}）'
+        self.ui.label_2.setText(str(where_is_now))
 
 
 def main():
