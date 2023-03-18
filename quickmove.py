@@ -41,6 +41,7 @@ class Quickmove(QObject):
 
         # 初始化
         self.ui.setFixedSize(576, 482)  # 设置窗口大小，用于固定大小
+        self.start_code = False  # 开始码，True则执行后续操作
 
         # 替换line edit为MyLineEdit
         self.ui.my_line_edit_path_old = MyLineEdit()  # 新建控件
@@ -53,15 +54,14 @@ class Quickmove(QObject):
         for i in config.sections():  # 初始设置一次配置文件下拉框
             self.ui.combobox_select_config.addItem(i)
         self.ui.combobox_select_config.setCurrentText(config.get('DEFAULT', 'show_config'))
-        global sort_key  # 用于排序
-        sort_key = natsort.natsort_keygen()  # 用于排序
+        self.sort_key = natsort.natsort_keygen()  # 用于排序
         locale.setlocale(locale.LC_ALL, '')  # 用于排序
 
         # 信号与槽函数连接
         self.ui.button_create_new_config.clicked.connect(self.config_create)
         self.ui.button_ask_path_old.clicked.connect(self.ask_path_old)
         self.ui.button_makesure.clicked.connect(self.makesure)
-        self.ui.button_quit.clicked.connect(self.quit_button)
+        self.ui.button_quit.clicked.connect(lambda: exit(1))
         self.ui.button_open_old.clicked.connect(self.open_old)
         self.ui.text_info.textChanged.connect(self.scroll)
         self.ui.combobox_select_config.currentIndexChanged.connect(self.select_config)
@@ -91,6 +91,7 @@ class Quickmove(QObject):
 
     def config_create(self):
         """新建配置文件，并重新读取"""
+        self.start_code = False  # 重置开始码
         tkinter.Tk().withdraw()
         new_config = simpledialog.askstring(title='配置文件', prompt='输入配置名：', initialvalue='config')
         if new_config in config:
@@ -110,6 +111,7 @@ class Quickmove(QObject):
 
     def config_delete(self):
         """删除配置文件"""
+        self.start_code = False
         if len(config.sections()) == 1:
             self.ui.text_info.insertHtml("<font color='red' size='3'>" + "<br>" + "请勿删除最后一个配置文件" + "</font>")
         else:
@@ -202,14 +204,17 @@ class Quickmove(QObject):
 
     def auto_move_button(self):
         """移动按钮"""
-        try:
-            move_folder_number = self.sender().objectName().split('_')[-1]
-            if os.path.exists(config.get(show_config, f'folder_new_{move_folder_number}')):  # 判断要移动的路径是否存在
-                self.start_move(move_folder_number)
-            else:
-                self.ui.text_info.insertHtml("<font color='red' size='3'>" + "<br>" + "对应目录不存在" + "</font>")
-        except NameError:
-            self.ui.text_info.insertHtml("<font color='red' size='3'>" + "<br>" + "未确认原文件夹" + "</font>")
+        if self.start_code:  # 如果开始码为True则执行
+            try:
+                move_folder_number = self.sender().objectName().split('_')[-1]
+                if os.path.exists(config.get(show_config, f'folder_new_{move_folder_number}')):  # 判断要移动的路径是否存在
+                    self.start_move(move_folder_number)
+                else:
+                    self.ui.text_info.insertHtml("<font color='red' size='3'>" + "<br>" + "对应目录不存在" + "</font>")
+            except NameError:
+                self.ui.text_info.insertHtml("<font color='red' size='3'>" + "<br>" + "未确认原文件夹" + "</font>")
+        else:
+            self.ui.text_info.insertHtml("<font color='red' size='3'>" + "<br>" + "设置已重置，请重新确认原文件夹" + "</font>")
 
     def start_move(self, move_folder_number):
         """移动文件夹操作，需要一个目标文件夹路径的变量"""
@@ -244,44 +249,63 @@ class Quickmove(QObject):
             if model == 'file':
                 os.startfile(need_moves[self.file_number])
             elif model == 'folder':
-                os.startfile(need_moves[self.file_number] + "/" + natsort.natsorted(os.listdir(need_moves[self.file_number]), key=sort_key, alg=natsort.ns.LOCALE | natsort.ns.IC | natsort.ns.PATH | natsort.ns.COMPATIBILITYNORMALIZE)[0])  # 如果是文件夹则打开文件夹里面的第一个文件
+                os.startfile(need_moves[self.file_number] + "/" + natsort.natsorted(os.listdir(need_moves[self.file_number]), key=self.sort_key, alg=natsort.ns.LOCALE | natsort.ns.IC | natsort.ns.PATH | natsort.ns.COMPATIBILITYNORMALIZE)[0])  # 如果是文件夹则打开文件夹里面的第一个文件
 
     def pass_this_time(self):
         """跳过本次文件"""
-        self.file_number += 1
-        self.ui.label_show_file.setText(os.path.split(need_moves[self.file_number])[1])
-        self.show_where_is_now()
-        if auto_open == "True":  # 检查勾选框状态
-            if model == 'file':
-                os.startfile(need_moves[self.file_number])
-            elif model == 'folder':
-                os.startfile(need_moves[self.file_number] + "/" + natsort.natsorted(os.listdir(need_moves[self.file_number]), key=sort_key, alg=natsort.ns.LOCALE | natsort.ns.IC | natsort.ns.PATH | natsort.ns.COMPATIBILITYNORMALIZE)[0])  # 如果是文件夹则打开文件夹里面的第一个文件
+        if self.start_code:
+            if self.file_number < len(need_moves):  # 防止跳过后超限
+                try:
+                    self.file_number += 1
+                    self.ui.label_show_file.setText(os.path.split(need_moves[self.file_number])[1])
+                    self.show_where_is_now()
+                    if auto_open == "True":  # 检查勾选框状态
+                        if model == 'file':
+                            os.startfile(need_moves[self.file_number])
+                        elif model == 'folder':
+                            os.startfile(need_moves[self.file_number] + "/" + natsort.natsorted(os.listdir(need_moves[self.file_number]), key=self.sort_key, alg=natsort.ns.LOCALE | natsort.ns.IC | natsort.ns.PATH | natsort.ns.COMPATIBILITYNORMALIZE)[0])  # 如果是文件夹则打开文件夹里面的第一个文件
+                except IndexError:
+                    self.ui.label_show_file.setText('已完成全部文件的移动')
+            else:
+                self.ui.text_info.insertHtml("<font color='red' size='3'>" + "<br>" + "没有可跳过的文件" + "</font>")
+        else:
+            self.ui.text_info.insertHtml("<font color='red' size='3'>" + "<br>" + "设置已重置，请重新确认原文件夹" + "</font>")
 
     def cancel_remove(self):
         """撤销移动"""
-        try:
-            if self.file_number > 0:  # 判断移动几个文件了，防止超出限制
-                self.file_number -= 1
-                if os.path.split(self.file_number_with_new_full_path[self.file_number])[1] != os.path.split(need_moves[self.file_number])[1]:  # 如果两边提取的文件名不同，则说明有过改名操作
-                    shutil.move(self.file_number_with_new_full_path[self.file_number], folder_old)  # 先移回去再改名
-                    os.renames(folder_old + '/' + os.path.split(self.file_number_with_new_full_path[self.file_number])[1], need_moves[self.file_number])
+        self.config_load()  # 先读取一遍设置，防止出错
+        if self.start_code:
+            try:
+                if self.file_number > 0:  # 判断移动几个文件了，防止超出限制
+                    self.file_number -= 1
+                    if os.path.split(self.file_number_with_new_full_path[self.file_number])[1] != os.path.split(need_moves[self.file_number])[1]:  # 如果两边提取的文件名不同，则说明有过改名操作
+                        shutil.move(self.file_number_with_new_full_path[self.file_number], folder_old)  # 先移回去再改名
+                        os.renames(folder_old + '/' + os.path.split(self.file_number_with_new_full_path[self.file_number])[1], need_moves[self.file_number])
+                    else:
+                        shutil.move(self.file_number_with_new_full_path[self.file_number], folder_old)
+                    self.ui.text_info.insertHtml(
+                        "<br>" + "<font color='purple' size='3'>" + self.get_time() + "</font>" + "<font color='blue' size='3'>" + " 撤销移动：" + "</font>" + "<font color='green' size='3'>" +
+                        os.path.split(self.file_number_with_new_full_path[self.file_number])[1] + "</font>")
+                    self.file_number_with_new_full_path.pop(self.file_number)
+                    if auto_open == "True":  # 检查勾选框状态
+                        if model == 'file':
+                            os.startfile(need_moves[self.file_number])
+                        elif model == 'folder':
+                            os.startfile(need_moves[self.file_number] + "/" + natsort.natsorted(os.listdir(need_moves[self.file_number]), key=self.sort_key, alg=natsort.ns.LOCALE | natsort.ns.IC | natsort.ns.PATH | natsort.ns.COMPATIBILITYNORMALIZE)[0])  # 如果是文件夹则打开文件夹里面的第一个文件
                 else:
-                    shutil.move(self.file_number_with_new_full_path[self.file_number], folder_old)
-                self.ui.text_info.insertHtml(
-                    "<br>" + "<font color='purple' size='3'>" + self.get_time() + "</font>" + "<font color='blue' size='3'>" + " 撤销移动：" + "</font>" + "<font color='green' size='3'>" +
-                    os.path.split(self.file_number_with_new_full_path[self.file_number])[1] + "</font>")
-                self.file_number_with_new_full_path.pop(self.file_number)
-            else:
-                self.ui.text_info.insertHtml("<font color='red' size='3'>" + "<br>" + "没有可以撤销移动的文件/文件夹" + "</font>")
-        except KeyError:
-            self.ui.text_info.insertHtml("<font color='pink' size='3'>" + "<br>" + "已撤回跳过操作" + "</font>")
-        self.ui.label_show_file.setText(os.path.split(need_moves[self.file_number])[1])  # 显示撤回的文件
-        self.show_where_is_now()
-        if auto_open == "True":  # 检查勾选框状态
-            if model == 'file':
-                os.startfile(need_moves[self.file_number])
-            elif model == 'folder':
-                os.startfile(need_moves[self.file_number] + "/" + natsort.natsorted(os.listdir(need_moves[self.file_number]), key=sort_key, alg=natsort.ns.LOCALE | natsort.ns.IC | natsort.ns.PATH | natsort.ns.COMPATIBILITYNORMALIZE)[0])  # 如果是文件夹则打开文件夹里面的第一个文件
+                    self.ui.text_info.insertHtml("<font color='red' size='3'>" + "<br>" + "没有可以撤销移动的文件/文件夹" + "</font>")
+            except KeyError:
+                self.ui.text_info.insertHtml("<font color='pink' size='3'>" + "<br>" + "已撤回跳过操作" + "</font>")
+                if auto_open == "True":  # 检查勾选框状态
+                    if model == 'file':
+                        os.startfile(need_moves[self.file_number])
+                    elif model == 'folder':
+                        os.startfile(need_moves[self.file_number] + "/" + natsort.natsorted(os.listdir(need_moves[self.file_number]), key=self.sort_key, alg=natsort.ns.LOCALE | natsort.ns.IC | natsort.ns.PATH | natsort.ns.COMPATIBILITYNORMALIZE)[0])  # 如果是文件夹则打开文件夹里面的第一个文件
+
+            self.ui.label_show_file.setText(os.path.split(need_moves[self.file_number])[1])  # 显示撤回的文件
+            self.show_where_is_now()
+        else:
+            self.ui.text_info.insertHtml("<font color='red' size='3'>" + "<br>" + "设置已重置，请重新确认原文件夹" + "</font>")
 
     def auto_new_path_input_save(self):
         """手工输入文件路径后自动更新配置文件"""
@@ -292,6 +316,7 @@ class Quickmove(QObject):
 
     def auto_old_path_input_save(self):
         """手工输入文件路径后自动更新配置文件"""
+        self.start_code = False
         old_path = self.ui.my_line_edit_path_old.text()
         config.set(show_config, 'folder_old', old_path)
         config.write(open('config.ini', 'w', encoding='utf-8'))
@@ -327,6 +352,7 @@ class Quickmove(QObject):
     def makesure(self):
         try:
             self.makesure_main()
+            self.start_code = True
         except FileNotFoundError:
             self.ui.text_info.insertHtml("<font color='red' size='3'>" + "<br>" + "对应目录不存在" + "</font>")
 
@@ -346,8 +372,8 @@ class Quickmove(QObject):
             else:
                 self.files.append(full_path)
         # 对获得的列表进行更好的排序
-        self.folders = natsort.natsorted(self.folders, key=sort_key, alg=natsort.ns.LOCALE | natsort.ns.IC | natsort.ns.PATH | natsort.ns.COMPATIBILITYNORMALIZE)
-        self.files = natsort.natsorted(self.files, key=sort_key, alg=natsort.ns.LOCALE | natsort.ns.IC | natsort.ns.PATH | natsort.ns.COMPATIBILITYNORMALIZE)
+        self.folders = natsort.natsorted(self.folders, key=self.sort_key, alg=natsort.ns.LOCALE | natsort.ns.IC | natsort.ns.PATH | natsort.ns.COMPATIBILITYNORMALIZE)
+        self.files = natsort.natsorted(self.files, key=self.sort_key, alg=natsort.ns.LOCALE | natsort.ns.IC | natsort.ns.PATH | natsort.ns.COMPATIBILITYNORMALIZE)
 
         global need_moves
         # 确认要移动的文件类型
@@ -367,15 +393,12 @@ class Quickmove(QObject):
             if model == 'file':
                 os.startfile(need_moves[0])
             elif model == 'folder':
-                os.startfile(need_moves[0] + "/" + natsort.natsorted(os.listdir(need_moves[0]), key=sort_key, alg=natsort.ns.LOCALE | natsort.ns.IC | natsort.ns.PATH | natsort.ns.COMPATIBILITYNORMALIZE)[0])  # 如果是文件夹则打开文件夹里面的第一个文件
+                os.startfile(need_moves[0] + "/" + natsort.natsorted(os.listdir(need_moves[0]), key=self.sort_key, alg=natsort.ns.LOCALE | natsort.ns.IC | natsort.ns.PATH | natsort.ns.COMPATIBILITYNORMALIZE)[0])  # 如果是文件夹则打开文件夹里面的第一个文件
 
     def get_time(self):
         """获取当前时间"""
         tm = str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         return tm
-
-    def quit_button(self):
-        sys.exit(1)
 
     def open_old(self):
         """打开原文件夹"""
@@ -386,6 +409,7 @@ class Quickmove(QObject):
 
     def check_model(self):
         """选择模式"""
+        self.start_code = False
         if self.ui.radio_button_file.isChecked():
             config.set(show_config, 'model', 'file')
         else:
@@ -408,6 +432,7 @@ class Quickmove(QObject):
 
     def select_config(self):
         """下拉框选择配置文件"""
+        self.start_code = False
         selected = self.ui.combobox_select_config.currentText()
         config.set('DEFAULT', 'show_config', selected)
         config.write(open('config.ini', 'w', encoding='utf-8'))
