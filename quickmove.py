@@ -61,7 +61,7 @@ class Quickmove(QObject):
         self.ui.button_create_new_config.clicked.connect(self.config_create)
         self.ui.button_ask_path_old.clicked.connect(self.ask_path_old)
         self.ui.button_makesure.clicked.connect(self.makesure)
-        self.ui.button_quit.clicked.connect(lambda: exit(1))
+        self.ui.button_quit.clicked.connect(lambda: sys.exit(1))
         self.ui.button_open_old.clicked.connect(self.open_old)
         self.ui.text_info.textChanged.connect(self.scroll)
         self.ui.combobox_select_config.currentIndexChanged.connect(self.select_config)
