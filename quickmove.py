@@ -12,6 +12,7 @@ import natsort
 import configparser
 import random
 import locale
+from windows_sorted import windows_sorted
 
 
 # 自定义MyLineEdit类，继承自QLineEdit
@@ -54,8 +55,6 @@ class Quickmove(QObject):
         for i in config.sections():  # 初始设置一次配置文件下拉框
             self.ui.combobox_select_config.addItem(i)
         self.ui.combobox_select_config.setCurrentText(config.get('DEFAULT', 'show_config'))
-        self.sort_key = natsort.natsort_keygen()  # 用于排序
-        locale.setlocale(locale.LC_ALL, '')  # 用于排序
 
         # 信号与槽函数连接
         self.ui.button_create_new_config.clicked.connect(self.config_create)
@@ -249,7 +248,9 @@ class Quickmove(QObject):
             if model == 'file':
                 os.startfile(need_moves[self.file_number])
             elif model == 'folder':
-                os.startfile(need_moves[self.file_number] + "/" + natsort.natsorted(os.listdir(need_moves[self.file_number]), key=self.sort_key, alg=natsort.ns.LOCALE | natsort.ns.IC | natsort.ns.PATH | natsort.ns.COMPATIBILITYNORMALIZE)[0])  # 如果是文件夹则打开文件夹里面的第一个文件
+                temp_path = need_moves[self.file_number]
+                temp_list = os.listdir(need_moves[self.file_number])
+                os.startfile(need_moves[self.file_number] + "/" + windows_sorted(temp_path, temp_list)[0])  # 如果是文件夹则打开文件夹里面的第一个文件
 
     def pass_this_time(self):
         """跳过本次文件"""
@@ -263,7 +264,9 @@ class Quickmove(QObject):
                         if model == 'file':
                             os.startfile(need_moves[self.file_number])
                         elif model == 'folder':
-                            os.startfile(need_moves[self.file_number] + "/" + natsort.natsorted(os.listdir(need_moves[self.file_number]), key=self.sort_key, alg=natsort.ns.LOCALE | natsort.ns.IC | natsort.ns.PATH | natsort.ns.COMPATIBILITYNORMALIZE)[0])  # 如果是文件夹则打开文件夹里面的第一个文件
+                            temp_path = need_moves[self.file_number]
+                            temp_list = need_moves[self.file_number]
+                            os.startfile(need_moves[self.file_number] + "/" + windows_sorted(temp_path, temp_list)[0])  # 如果是文件夹则打开文件夹里面的第一个文件
                 except IndexError:
                     self.ui.label_show_file.setText('已完成全部文件的移动')
             else:
@@ -291,7 +294,9 @@ class Quickmove(QObject):
                         if model == 'file':
                             os.startfile(need_moves[self.file_number])
                         elif model == 'folder':
-                            os.startfile(need_moves[self.file_number] + "/" + natsort.natsorted(os.listdir(need_moves[self.file_number]), key=self.sort_key, alg=natsort.ns.LOCALE | natsort.ns.IC | natsort.ns.PATH | natsort.ns.COMPATIBILITYNORMALIZE)[0])  # 如果是文件夹则打开文件夹里面的第一个文件
+                            temp_path = need_moves[self.file_number]
+                            temp_list = os.listdir(need_moves[self.file_number])
+                            os.startfile(need_moves[self.file_number] + "/" + windows_sorted(temp_path, temp_list)[0])  # 如果是文件夹则打开文件夹里面的第一个文件
                 else:
                     self.ui.text_info.insertHtml("<font color='red' size='3'>" + "<br>" + "没有可以撤销移动的文件/文件夹" + "</font>")
             except KeyError:
@@ -300,7 +305,9 @@ class Quickmove(QObject):
                     if model == 'file':
                         os.startfile(need_moves[self.file_number])
                     elif model == 'folder':
-                        os.startfile(need_moves[self.file_number] + "/" + natsort.natsorted(os.listdir(need_moves[self.file_number]), key=self.sort_key, alg=natsort.ns.LOCALE | natsort.ns.IC | natsort.ns.PATH | natsort.ns.COMPATIBILITYNORMALIZE)[0])  # 如果是文件夹则打开文件夹里面的第一个文件
+                        temp_path = need_moves[self.file_number]
+                        temp_list = os.listdir(need_moves[self.file_number])
+                        os.startfile(need_moves[self.file_number] + "/" + windows_sorted(temp_path, temp_list)[0])  # 如果是文件夹则打开文件夹里面的第一个文件
 
             self.ui.label_show_file.setText(os.path.split(need_moves[self.file_number])[1])  # 显示撤回的文件
             self.show_where_is_now()
@@ -354,7 +361,7 @@ class Quickmove(QObject):
             self.makesure_main()
             self.start_code = True
         except FileNotFoundError:
-            self.ui.text_info.insertHtml("<font color='red' size='3'>" + "<br>" + "对应目录不存在" + "</font>")
+            self.ui.text_info.insertHtml("<font color='red' size='3'>" + "<br>" + "测试2对应目录不存在" + "</font>")
 
     def makesure_main(self):
         """确认路径，遍历文件"""
@@ -372,8 +379,24 @@ class Quickmove(QObject):
             else:
                 self.files.append(full_path)
         # 对获得的列表进行更好的排序
-        self.folders = natsort.natsorted(self.folders, key=self.sort_key, alg=natsort.ns.LOCALE | natsort.ns.IC | natsort.ns.PATH | natsort.ns.COMPATIBILITYNORMALIZE)
-        self.files = natsort.natsorted(self.files, key=self.sort_key, alg=natsort.ns.LOCALE | natsort.ns.IC | natsort.ns.PATH | natsort.ns.COMPATIBILITYNORMALIZE)
+        old_path = config.get(show_config, "folder_old")
+        temp_folders = []
+        for i in self.folders:
+            temp_folders.append(os.path.split(i)[1])
+        temp_folders = windows_sorted(old_path, temp_folders)  # 排序
+        temp2_folders = []
+        for i in temp_folders:
+            temp2_folders.append(os.path.join(old_path, i))  # 组合完整路径
+        self.folders = temp2_folders
+
+        temp_files = []
+        for i in self.files:
+            temp_files.append(os.path.split(i)[1])
+        temp_files = windows_sorted(old_path, temp_files)  # 排序
+        temp2_files = []
+        for i in temp_files:
+            temp2_files.append(os.path.join(old_path, i))  # 组合完整路径
+        self.files = temp2_files
 
         global need_moves
         # 确认要移动的文件类型
@@ -393,7 +416,9 @@ class Quickmove(QObject):
             if model == 'file':
                 os.startfile(need_moves[0])
             elif model == 'folder':
-                os.startfile(need_moves[0] + "/" + natsort.natsorted(os.listdir(need_moves[0]), key=self.sort_key, alg=natsort.ns.LOCALE | natsort.ns.IC | natsort.ns.PATH | natsort.ns.COMPATIBILITYNORMALIZE)[0])  # 如果是文件夹则打开文件夹里面的第一个文件
+                temp_path = need_moves[0]
+                temp_list = os.listdir(need_moves[0])
+                os.startfile(need_moves[0] + "/" + windows_sorted(temp_path, temp_list)[0])  # 如果是文件夹则打开文件夹里面的第一个文件
 
     def get_time(self):
         """获取当前时间"""
