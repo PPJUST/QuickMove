@@ -1,37 +1,76 @@
-# 更新日期：20230407
-
 import os
 import natsort
+import locale
 import re
 
 
-def windows_sorted(path: str, files_list: list):
-    """输入路径、文件列表，返回Windows排序规则的列表"""
-    # 整合完整路径
-    fullpath_files_list = []
-    for i in files_list:
-        fullpath_files_list.append(os.path.join(path, i))
+def windows_sorted(path: str, model: str):
+    """输入路径、模式，返回Windows排序规则的列表"""
+    # 遍历路径文件
+    if os.path.exists(path) and os.path.isdir(path):
+        files_list = os.listdir(path)
 
-    # 分离文件与文件夹
-    fullpath_files = []
-    fullpath_folders = []
-    for i in fullpath_files_list:
-        if os.path.isfile(i):
-            fullpath_files.append(i)
+        # 组合完整路径
+        fullpath_files_list = []
+        for i in files_list:
+            fullpath_files_list.append(os.path.join(path, i))
+
+        # 分离文件与文件夹
+        fullpath_files = []
+        fullpath_folders = []
+        for i in fullpath_files_list:
+            if os.path.isfile(i):
+                fullpath_files.append(i)
+            else:
+                fullpath_folders.append(i)
+
+        # 按model传递参数
+        if model == 'file':
+            result = run_sorted_file(fullpath_files)
+            return result
+        elif model == 'folder':
+            result = run_sorted_folder(fullpath_folders)
+            return result
+        elif model == 'both':
+            result1 = run_sorted_folder(fullpath_folders)
+            result2 = run_sorted_file(fullpath_files)
+            result = result1 + result2
+            return result
         else:
-            fullpath_folders.append(i)
+            return 'model设置不正确，选项为file/folder/both'
+    else:
+        return "路径不存在或者不是文件夹"
 
+
+def run_sorted_file(fullpath_files):
     # 给每个字符前加前缀，取决于优先级
     add_prefix_files = []
     files_new_name_match_old_name = {}
-    add_prefix_folders = []
-    folders_new_name_match_old_name = {}
     for i in fullpath_files:
         filename = os.path.split(os.path.splitext(i)[0])[1]
         suffix = os.path.splitext(i)[1]
         add_prefix_filename = str_add_prefix(filename) + suffix
         add_prefix_files.append(add_prefix_filename)
         files_new_name_match_old_name[add_prefix_filename] = filename + suffix
+
+    # 排序列表
+    locale.setlocale(locale.LC_ALL, '')
+    sort_key = natsort.natsort_keygen()
+    add_prefix_files = natsort.natsorted(add_prefix_files, key=sort_key,
+                                         alg=natsort.ns.LOCALE | natsort.ns.IC | natsort.ns.PATH | natsort.ns.COMPATIBILITYNORMALIZE)
+
+    # 列表匹配字典，还原原始文件名
+    sort_files_list = []
+    for i in add_prefix_files:
+        sort_files_list.append(files_new_name_match_old_name[i])
+
+    return sort_files_list
+
+
+def run_sorted_folder(fullpath_folders):
+    # 给每个字符前加前缀，取决于优先级
+    add_prefix_folders = []
+    folders_new_name_match_old_name = {}
     for i in fullpath_folders:
         filename = os.path.split(i)[1]
         add_prefix_filename = str_add_prefix(filename)
@@ -39,26 +78,21 @@ def windows_sorted(path: str, files_list: list):
         folders_new_name_match_old_name[add_prefix_filename] = filename
 
     # 排序列表
-    add_prefix_files = natsort.natsorted(add_prefix_files, alg=natsort.ns.LOCALE | natsort.ns.IC | natsort.ns.PATH | natsort.ns.COMPATIBILITYNORMALIZE)
-    add_prefix_folders = natsort.natsorted(add_prefix_folders, alg=natsort.ns.LOCALE | natsort.ns.IC | natsort.ns.PATH | natsort.ns.COMPATIBILITYNORMALIZE)
+    locale.setlocale(locale.LC_ALL, '')
+    sort_key = natsort.natsort_keygen()
+    add_prefix_folders = natsort.natsorted(add_prefix_folders, key=sort_key,
+                                           alg=natsort.ns.LOCALE | natsort.ns.IC | natsort.ns.PATH | natsort.ns.COMPATIBILITYNORMALIZE)
 
     # 列表匹配字典，还原原始文件名
-    sort_files_list = []
     sort_folders_list = []
-    for i in add_prefix_files:
-        sort_files_list.append(files_new_name_match_old_name[i])
     for i in add_prefix_folders:
         sort_folders_list.append(folders_new_name_match_old_name[i])
 
-    # 连接最终结果
-    finally_sort_list = sort_folders_list + sort_files_list
-
-    return finally_sort_list
+    return sort_folders_list
 
 
 def str_add_prefix(filename: str) -> str:
     # 输入字符串，返回按优先级添加ABCDEFG的新字符串（数字合并后添加前缀）
-
     # 空格AA判断，==' '
     prefix_auto_dict = {
         "'": 'BA',
@@ -99,21 +133,44 @@ def str_add_prefix(filename: str) -> str:
         '《': 'CJ',
         '》': 'CK',
         '￥': 'CL',
-        '【': 'CM',
-        '】': 'CN',
-        '+': 'CO',
-        '=': 'CP',
-        '·': 'CQ',
-        '…': 'CR',
+        '「': 'CM',
+        '」': 'CN',
+        '【': 'CO',
+        '】': 'CP',
+        '+': 'CQ',
+        '=': 'CR',
+        '·': 'CS',
+        '…': 'CT',
     }
     # 数字DA判断 .isdigit()
     # 字母DB判断 .isalpha()
     # 其余字符EA，例如中文、日文、韩文
 
-    split_digit_filename = [i for i in re.split(r'(\d+)', filename) if i]  # 使用正则分离数字与其他字符
+    # 使用正则分离字符串中的数字与其他字符
+    # 230407的分组方法
+    # split_digit_filename = [i for i in re.split(r'(\d+)', filename) if i]  # 使用正则分离数字与其他字符
+    split_digit_filename = [i for i in re.split(r'([^\d.]+)', filename) if i]
+    new_split_digit_filename = []
+    for i in split_digit_filename:  # 分离有多个小数点的列表元素（如果有多个小数点，则以第二个小数点为界分割）
+        if re.match(r'^\d+(\.\d*)*$', i):  # 如果都是数字与小数点且以数字开头
+            if i.count('.') == 1:  # 如果只出现1次
+                new_split_digit_filename.append(i)
+            else:  # 如果出现多次
+                temp_split = [x for x in re.split(r'(\d+\.\d+)', i) if x]  # 分离小数，后面取第1个小数，其他的按.切割
+                split_float = temp_split[0]  # 取第一个小数
+                split_other = temp_split[1:]  # 其他内容
+                split_other_join = ''.join(split_other)  # 合并其他内容
+                split_other_join_split = [y for y in re.split(r'(\d+)', split_other_join) if y]  # 切割合并后的其他内容
+                new_split_digit_filename.append(split_float)
+                new_split_digit_filename += split_other_join_split
+        else:
+            temp_split = [z for z in re.split(r'(\d+)', i) if z]  # 再次分离，防止有.开头的
+            new_split_digit_filename += temp_split
+    split_digit_filename = new_split_digit_filename  # 还原回去
+
     new_filename = ''
     for x in split_digit_filename:
-        if x.isdigit():
+        if re.match(r'^\d+(.\d+)?$', x):  # 如果都是数字与小数点。之前用的x.isdigit()，不再使用
             new_filename += "DA" + x
         else:
             for i in x:
@@ -127,5 +184,4 @@ def str_add_prefix(filename: str) -> str:
                     new_filename += "DB" + i
                 else:
                     new_filename += "EA" + i
-
     return new_filename
