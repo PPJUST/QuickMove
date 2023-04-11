@@ -246,8 +246,9 @@ class Quickmove(QObject):
             if model == 'file':
                 os.startfile(need_moves[self.file_number])
             elif model == 'folder':
-                temp_path = need_moves[self.file_number]
-                os.startfile(need_moves[self.file_number] + "/" + windows_sorted(temp_path, 'file')[0])  # 如果是文件夹则打开文件夹里面的第一个文件
+                # temp_path = need_moves[self.file_number]
+                # os.startfile(temp_path + "/" + windows_sorted(temp_path, 'file')[0])  # 如果是文件夹则打开文件夹里面的第一个文件
+                self.auto_open_next_folder_no_hidden(need_moves[self.file_number])
 
     def pass_this_time(self):
         """跳过本次文件"""
@@ -261,8 +262,9 @@ class Quickmove(QObject):
                         if model == 'file':
                             os.startfile(need_moves[self.file_number])
                         elif model == 'folder':
-                            temp_path = need_moves[self.file_number]
-                            os.startfile(need_moves[self.file_number] + "/" + windows_sorted(temp_path, 'file')[0])  # 如果是文件夹则打开文件夹里面的第一个文件
+                            # temp_path = need_moves[self.file_number]
+                            # os.startfile(temp_path + "/" + windows_sorted(temp_path, 'file')[0])  # 如果是文件夹则打开文件夹里面的第一个文件
+                            self.auto_open_next_folder_no_hidden(need_moves[self.file_number])
                 except IndexError:
                     self.ui.label_show_file.setText('已完成全部文件的移动')
             else:
@@ -290,8 +292,9 @@ class Quickmove(QObject):
                         if model == 'file':
                             os.startfile(need_moves[self.file_number])
                         elif model == 'folder':
-                            temp_path = need_moves[self.file_number]
-                            os.startfile(need_moves[self.file_number] + "/" + windows_sorted(temp_path, 'file')[0])  # 如果是文件夹则打开文件夹里面的第一个文件
+                            # temp_path = need_moves[self.file_number]
+                            # os.startfile(temp_path + "/" + windows_sorted(temp_path, 'file')[0])  # 如果是文件夹则打开文件夹里面的第一个文件
+                            self.auto_open_next_folder_no_hidden(need_moves[self.file_number])
                 else:
                     self.ui.text_info.insertHtml("<font color='red' size='3'>" + "<br>" + "没有可以撤销移动的文件/文件夹" + "</font>")
             except KeyError:
@@ -300,8 +303,9 @@ class Quickmove(QObject):
                     if model == 'file':
                         os.startfile(need_moves[self.file_number])
                     elif model == 'folder':
-                        temp_path = need_moves[self.file_number]
-                        os.startfile(need_moves[self.file_number] + "/" + windows_sorted(temp_path, 'file')[0])  # 如果是文件夹则打开文件夹里面的第一个文件
+                        # temp_path = need_moves[self.file_number]
+                        # os.startfile(temp_path + "/" + windows_sorted(temp_path, 'file')[0])  # 如果是文件夹则打开文件夹里面的第一个文件
+                        self.auto_open_next_folder_no_hidden(need_moves[self.file_number])
 
             self.ui.label_show_file.setText(os.path.split(need_moves[self.file_number])[1])  # 显示撤回的文件
             self.show_where_is_now()
@@ -369,9 +373,20 @@ class Quickmove(QObject):
         files_name = windows_sorted(travel_path, 'file')
         for i in files_name:
             self.files.append(os.path.join(travel_path, i))
+        no_hidden_list = []
+        for i in self.files:
+            if self.check_hidden(i) == False:  # 排除隐藏文件
+                no_hidden_list.append(i)
+        self.files = no_hidden_list
+
         folders_name = windows_sorted(travel_path, 'folder')
         for i in folders_name:
             self.folders.append(os.path.join(travel_path, i))
+        no_hidden_list = []
+        for i in self.folders:
+            if self.check_hidden(i) == False:  # 排除隐藏文件
+                no_hidden_list.append(i)
+        self.folders = no_hidden_list
 
         global need_moves
         # 确认要移动的文件类型
@@ -391,8 +406,41 @@ class Quickmove(QObject):
             if model == 'file':
                 os.startfile(need_moves[0])
             elif model == 'folder':
-                temp_path = need_moves[0]
-                os.startfile(need_moves[0] + "/" + windows_sorted(temp_path, 'file')[0])  # 如果是文件夹则打开文件夹里面的第一个文件
+                # temp_path = need_moves[0]
+                # os.startfile(temp_path + "/" + windows_sorted(temp_path, 'file')[0])  # 如果是文件夹则打开文件夹里面的第一个文件
+                self.auto_open_next_folder_no_hidden(need_moves[0])
+
+    def check_hidden(self, file_path):
+        """检查文件是否隐藏"""
+        import ctypes
+
+        # 定义WinAPI函数
+        GetFileAttributesW = ctypes.windll.kernel32.GetFileAttributesW
+
+        # 定义常量
+        FILE_ATTRIBUTE_HIDDEN = 0x2
+        INVALID_FILE_ATTRIBUTES = -1
+
+        def is_hidden(file_path):
+            # 获取文件属性
+            attrs = GetFileAttributesW(file_path)
+            if attrs == INVALID_FILE_ATTRIBUTES:
+                # 文件不存在或无法访问
+                return False
+            return attrs & FILE_ATTRIBUTE_HIDDEN == FILE_ATTRIBUTE_HIDDEN
+        return is_hidden(file_path)
+
+    def auto_open_next_folder_no_hidden(self, path):
+        """自动打开下一个文件夹中的第一个非隐藏文件"""
+        temp_list = []
+        files = windows_sorted(path, 'file')
+        for i in files:
+            temp_list.append(os.path.join(path, i))
+        no_hidden_list = []
+        for i in temp_list:
+            if self.check_hidden(i) == False:  # 排除隐藏文件
+                no_hidden_list.append(i)
+        os.startfile(no_hidden_list[0])  # 如果是文件夹则打开文件夹里面的第一个文件
 
     def get_time(self):
         """获取当前时间"""
