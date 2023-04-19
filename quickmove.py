@@ -1,7 +1,5 @@
 import os
-import tkinter
-from tkinter import filedialog, simpledialog
-from PySide2.QtWidgets import QApplication, QPushButton, QHBoxLayout, QLineEdit, QToolButton
+from PySide2.QtWidgets import QApplication, QPushButton, QHBoxLayout, QLineEdit, QToolButton, QFileDialog, QInputDialog
 from PySide2.QtUiTools import QUiLoader
 from PySide2.QtCore import QObject, Qt
 from PySide2.QtGui import QDragEnterEvent, QDropEvent
@@ -11,6 +9,9 @@ import shutil
 import configparser
 import random
 from windows_sorted import windows_sorted
+import natsort
+import locale
+import re
 
 
 # 自定义MyLineEdit类，继承自QLineEdit
@@ -39,7 +40,7 @@ class Quickmove(QObject):
         self.ui = QUiLoader().load("ui.ui")
 
         # 初始化
-        self.ui.setFixedSize(576, 482)  # 设置窗口大小，用于固定大小
+        # self.ui.setFixedSize(576, 482)  # 设置窗口大小，用于固定大小
         self.start_code = False  # 开始码，True则执行后续操作
 
         # 替换line edit为MyLineEdit
@@ -89,8 +90,7 @@ class Quickmove(QObject):
     def config_create(self):
         """新建配置文件，并重新读取"""
         self.start_code = False  # 重置开始码
-        tkinter.Tk().withdraw()
-        new_config = simpledialog.askstring(title='配置文件', prompt='输入配置名：', initialvalue='config')
+        new_config = self.input_config_name()
         if new_config in config:
             self.ui.text_info.insertHtml("<font color='red' size='3'>" + "<br>" + "配置文件名重复" + "</font>")
         else:
@@ -105,6 +105,14 @@ class Quickmove(QObject):
             config.write(open('config.ini', 'w',  encoding='utf-8'))
             self.ui.combobox_select_config.addItem(new_config)
             self.config_load()
+
+    def input_config_name(self):
+        """输入配置文件名称"""
+        name, ok = QInputDialog.getText(self.ui, "配置文件", "输入配置名称:", text="new config")
+        if name == "":
+            return self.input_config_name()
+        else:
+            return name
 
     def config_delete(self):
         """删除配置文件"""
@@ -174,7 +182,7 @@ class Quickmove(QObject):
             # 相同操作创建每一次按钮
             self.ui.move_button = QPushButton()  # 创建一个按钮
             self.ui.move_button.setText(str(i))  # 按钮设置文本
-            self.ui.move_button.setStyleSheet('background-color: pink')
+            # self.ui.move_button.setStyleSheet('background-color: pink')
             self.ui.move_button.setObjectName(f'button_move_{i}')  # 按钮设置控件名
             self.ui.move_button.setFixedSize(40, 40)  # 设置按钮大小
             self.ui.name_layout_group.addWidget(self.ui.move_button)  # 将按钮添加到布局中
@@ -195,7 +203,7 @@ class Quickmove(QObject):
             self.ui.move_open_button = QPushButton()  # 创建一个按钮
             self.ui.move_open_button.setText('打开')  # 按钮设置文本
             self.ui.move_open_button.setObjectName(f'button_move_open_{i}')  # 按钮设置控件名
-            self.ui.move_open_button.setFixedSize(40, 25)  # 设置按钮大小
+            # self.ui.move_open_button.setFixedSize(40, 25)  # 设置按钮大小
             self.ui.name_layout_group.addWidget(self.ui.move_open_button)  # 将按钮添加到布局中
             self.ui.move_open_button.clicked.connect(self.auto_move_open_button)  # 所有的按钮都会链接到一个槽函数，可以在槽函数中判断每个按钮独立的属性来进行不同的操作
 
@@ -219,28 +227,34 @@ class Quickmove(QObject):
         if self.file_number + 1 > file_number_max:  # 确认移动到第几个文件了，是否超限了
             self.ui.text_info.insertHtml("<font color='red' size='3'>" + "<br>" + "已完成全部文件的移动" + "</font>")
         else:
-            move_files = os.listdir(config.get(show_config, f'folder_new_{move_folder_number}'))  # 检查目标文件夹下的文件，是否和要移动的文件重复
-            if os.path.split(need_moves[self.file_number])[1] in move_files:
-                new_name = f'【重复{random.randint(1, 1000)}】' + os.path.split(need_moves[self.file_number])[1]
-                new_full_name = os.path.split(need_moves[self.file_number])[0] + '/' + new_name
-                os.renames(need_moves[self.file_number], new_full_name)
-                shutil.move(new_full_name, config.get(show_config, f'folder_new_{move_folder_number}'))
-                self.file_number_with_new_full_path[self.file_number] = config.get(show_config, f'folder_new_{move_folder_number}') + '/' + new_name  # 将编号与新路径+新文件名对应，用于撤销操作
+            if os.path.exists(need_moves[self.file_number]):
+                move_files = os.listdir(config.get(show_config, f'folder_new_{move_folder_number}'))  # 检查目标文件夹下的文件，是否和要移动的文件重复
+                if os.path.split(need_moves[self.file_number])[1] in move_files:
+                    new_name = f'【重复{random.randint(1, 1000)}】' + os.path.split(need_moves[self.file_number])[1]
+                    new_full_name = os.path.split(need_moves[self.file_number])[0] + '/' + new_name
+                    os.renames(need_moves[self.file_number], new_full_name)
+                    shutil.move(new_full_name, config.get(show_config, f'folder_new_{move_folder_number}'))
+                    self.file_number_with_new_full_path[self.file_number] = config.get(show_config, f'folder_new_{move_folder_number}') + '/' + new_name  # 将编号与新路径+新文件名对应，用于撤销操作
+                else:
+                    shutil.move(need_moves[self.file_number], config.get(show_config, f'folder_new_{move_folder_number}'))
+                    self.file_number_with_new_full_path[self.file_number] = config.get(show_config, f'folder_new_{move_folder_number}') + '/' + os.path.split(need_moves[self.file_number])[1]  # 将编号与新路径+新文件名对应，用于撤销操作
+                self.file_number += 1
+                self.ui.text_info.insertHtml(
+                    "<br>" + "<font color='purple' size='3'>" + self.get_time() + "</font>" + " 完成文件移动：" + "<font color='green' size='3'>" +
+                    os.path.split(need_moves[self.file_number - 1])[
+                        1] + "</font>" + " >>> " + "<font color='orange' size='3'>" + config.get(show_config,
+                                                                                                 f'folder_new_{move_folder_number}') + "</font>")
             else:
-                shutil.move(need_moves[self.file_number], config.get(show_config, f'folder_new_{move_folder_number}'))
-                self.file_number_with_new_full_path[self.file_number] = config.get(show_config, f'folder_new_{move_folder_number}') + '/' + os.path.split(need_moves[self.file_number])[1]  # 将编号与新路径+新文件名对应，用于撤销操作
-            self.file_number += 1
+                self.ui.text_info.insertHtml(
+                    "<font color='red' size='3'>" + "<br>" + "当前文件不存在，已跳过" + "</font>")
+                self.file_number += 1
             try:
                 self.ui.label_show_file.setText(os.path.split(need_moves[self.file_number])[1])
                 self.show_where_is_now()
             except IndexError:  # 超限说明已经移动完全部文件
                 self.ui.label_show_file.setText('已完成全部文件的移动')
                 self.show_where_is_now()
-            self.ui.text_info.insertHtml(
-                "<br>" + "<font color='purple' size='3'>" + self.get_time() + "</font>" + " 完成文件移动：" + "<font color='green' size='3'>" +
-                os.path.split(need_moves[self.file_number - 1])[
-                    1] + "</font>" + " >>> " + "<font color='orange' size='3'>" + config.get(show_config,
-                                                                                             f'folder_new_{move_folder_number}') + "</font>")
+
         # 是否自动打开下一个文件
         if auto_open == "True":  # 检查勾选框状态
             if model == 'file':
@@ -343,9 +357,7 @@ class Quickmove(QObject):
 
     def ask_path(self):
         """选取文件夹路径"""
-        root = tkinter.Tk()
-        root.withdraw()  # 用来隐藏窗口
-        path = filedialog.askdirectory()
+        path = QFileDialog.getExistingDirectory(self.ui, "选择文件夹")
         return path
 
     def ask_path_old(self):
@@ -375,7 +387,7 @@ class Quickmove(QObject):
             self.files.append(os.path.join(travel_path, i))
         no_hidden_list = []
         for i in self.files:
-            if self.check_hidden(i) == False:  # 排除隐藏文件
+            if not self.check_hidden(i):  # 排除隐藏文件
                 no_hidden_list.append(i)
         self.files = no_hidden_list
 
@@ -384,7 +396,7 @@ class Quickmove(QObject):
             self.folders.append(os.path.join(travel_path, i))
         no_hidden_list = []
         for i in self.folders:
-            if self.check_hidden(i) == False:  # 排除隐藏文件
+            if not self.check_hidden(i):  # 排除隐藏文件
                 no_hidden_list.append(i)
         self.folders = no_hidden_list
 
@@ -421,9 +433,9 @@ class Quickmove(QObject):
         FILE_ATTRIBUTE_HIDDEN = 0x2
         INVALID_FILE_ATTRIBUTES = -1
 
-        def is_hidden(file_path):
+        def is_hidden(file):
             # 获取文件属性
-            attrs = GetFileAttributesW(file_path)
+            attrs = GetFileAttributesW(file)
             if attrs == INVALID_FILE_ATTRIBUTES:
                 # 文件不存在或无法访问
                 return False
@@ -438,7 +450,7 @@ class Quickmove(QObject):
             temp_list.append(os.path.join(path, i))
         no_hidden_list = []
         for i in temp_list:
-            if self.check_hidden(i) == False:  # 排除隐藏文件
+            if not self.check_hidden(i):  # 排除隐藏文件
                 no_hidden_list.append(i)
         os.startfile(no_hidden_list[0])  # 如果是文件夹则打开文件夹里面的第一个文件
 
@@ -502,8 +514,11 @@ class Quickmove(QObject):
 
 
 def main():
-    app = QApplication([])
-    app.setStyle('Fusion')    # 设置风格
+    app = QApplication()
+    with open("UbuntuStyle.qss", "r", encoding='utf-8') as f:
+        style = f.read()
+        app.setStyleSheet(style)
+    # app.setStyle('Fusion')
     quickmove = Quickmove()
     quickmove.ui.show()
     app.exec_()
