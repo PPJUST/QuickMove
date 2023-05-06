@@ -229,8 +229,10 @@ class Quickmove(QObject):
         else:
             if os.path.exists(need_moves[self.file_number]):
                 move_files = os.listdir(config.get(show_config, f'folder_new_{move_folder_number}'))  # 检查目标文件夹下的文件，是否和要移动的文件重复
+                move_to_folder = config.get(show_config, f'folder_new_{move_folder_number}')
                 if os.path.split(need_moves[self.file_number])[1] in move_files:
-                    new_name = f'【重复{random.randint(1, 1000)}】' + os.path.split(need_moves[self.file_number])[1]
+                    old_filepath = need_moves[self.file_number]
+                    new_name = self.rename_recursion(old_filepath, move_to_folder)
                     new_full_name = os.path.split(need_moves[self.file_number])[0] + '/' + new_name
                     os.renames(need_moves[self.file_number], new_full_name)
                     shutil.move(new_full_name, config.get(show_config, f'folder_new_{move_folder_number}'))
@@ -263,6 +265,18 @@ class Quickmove(QObject):
                 # temp_path = need_moves[self.file_number]
                 # os.startfile(temp_path + "/" + windows_sorted(temp_path, 'file')[0])  # 如果是文件夹则打开文件夹里面的第一个文件
                 self.auto_open_next_folder_no_hidden(need_moves[self.file_number])
+
+    def rename_recursion(self, filepath, the_folder):
+        """递归改名，确保无同名文件"""
+        filename_without_suffix = os.path.split(os.path.splitext(filepath)[0])[1]
+        suffix = os.path.splitext(filepath)[1]
+        count = 1
+        while True:
+            new_filename = f"{filename_without_suffix} - new{count}{suffix}"
+            if new_filename not in os.listdir(the_folder):
+                return new_filename
+            else:
+                count += 1
 
     def pass_this_time(self):
         """跳过本次文件"""
