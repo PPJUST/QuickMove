@@ -266,14 +266,16 @@ class Quickmove(QObject):
                 # os.startfile(temp_path + "/" + windows_sorted(temp_path, 'file')[0])  # 如果是文件夹则打开文件夹里面的第一个文件
                 self.auto_open_next_folder_no_hidden(need_moves[self.file_number])
 
-    def rename_recursion(self, filepath, the_folder):
+    @staticmethod
+    def rename_recursion(filepath, the_folder):
         """递归改名，确保无同名文件"""
         filename_without_suffix = os.path.split(os.path.splitext(filepath)[0])[1]
         suffix = os.path.splitext(filepath)[1]
         count = 1
+        all_filename = os.listdir(the_folder) + os.listdir(os.path.split(filepath)[0])
         while True:
             new_filename = f"{filename_without_suffix} - new{count}{suffix}"
-            if new_filename not in os.listdir(the_folder):
+            if new_filename not in all_filename:
                 return new_filename
             else:
                 count += 1
@@ -436,7 +438,8 @@ class Quickmove(QObject):
                 # os.startfile(temp_path + "/" + windows_sorted(temp_path, 'file')[0])  # 如果是文件夹则打开文件夹里面的第一个文件
                 self.auto_open_next_folder_no_hidden(need_moves[0])
 
-    def check_hidden(self, file_path):
+    @staticmethod
+    def check_hidden(file_path):
         """检查文件是否隐藏"""
         import ctypes
 
@@ -468,7 +471,8 @@ class Quickmove(QObject):
                 no_hidden_list.append(i)
         os.startfile(no_hidden_list[0])  # 如果是文件夹则打开文件夹里面的第一个文件
 
-    def get_time(self):
+    @staticmethod
+    def get_time():
         """获取当前时间"""
         tm = str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         return tm
