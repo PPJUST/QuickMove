@@ -228,9 +228,10 @@ class Quickmove(QObject):
             self.ui.text_info.insertHtml("<font color='red' size='3'>" + "<br>" + "已完成全部文件的移动" + "</font>")
         else:
             if os.path.exists(need_moves[self.file_number]):
-                move_files = os.listdir(config.get(show_config, f'folder_new_{move_folder_number}'))  # 检查目标文件夹下的文件，是否和要移动的文件重复
                 move_to_folder = config.get(show_config, f'folder_new_{move_folder_number}')
-                if os.path.split(need_moves[self.file_number])[1] in move_files:
+                move_files = os.listdir(move_to_folder)  # 检查目标文件夹下的文件，是否和要移动的文件重复
+                move_files = [x.upper() for x in move_files]  # 转大写，统一格式用于查重
+                if os.path.split(need_moves[self.file_number])[1].upper() in move_files:
                     old_filepath = need_moves[self.file_number]
                     new_name = self.rename_recursion(old_filepath, move_to_folder)
                     new_full_name = os.path.split(need_moves[self.file_number])[0] + '/' + new_name
@@ -273,9 +274,10 @@ class Quickmove(QObject):
         suffix = os.path.splitext(filepath)[1]
         count = 1
         all_filename = os.listdir(the_folder) + os.listdir(os.path.split(filepath)[0])
+        all_filename = [x.upper() for x in all_filename]  # 转大写，防止大小写匹配不到
         while True:
             new_filename = f"{filename_without_suffix} - new{count}{suffix}"
-            if new_filename not in all_filename:
+            if new_filename.upper() not in all_filename:
                 return new_filename
             else:
                 count += 1
