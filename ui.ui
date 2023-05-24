@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>576</width>
-    <height>482</height>
+    <width>523</width>
+    <height>397</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -86,6 +86,9 @@
        </property>
        <property name="text">
         <string>显示当前文件</string>
+       </property>
+       <property name="textFormat">
+        <enum>Qt::AutoText</enum>
        </property>
        <property name="wordWrap">
         <bool>true</bool>
@@ -176,7 +179,7 @@
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
-       <widget class="QWidget" name="">
+       <widget class="QWidget" name="layoutWidget">
         <layout class="QVBoxLayout" name="verticalLayout_5">
          <item>
           <widget class="QRadioButton" name="radio_button_file">

@@ -1,17 +1,15 @@
-import os
-from PySide2.QtWidgets import QApplication, QPushButton, QHBoxLayout, QLineEdit, QToolButton, QFileDialog, QInputDialog
-from PySide2.QtUiTools import QUiLoader
-from PySide2.QtCore import QObject, Qt
-from PySide2.QtGui import QDragEnterEvent, QDropEvent
-import datetime
-import sys
-import shutil
 import configparser
-import random
+import datetime
+import os
+import shutil
+import sys
+
+from PySide2.QtCore import QObject, Qt
+from PySide2.QtGui import QDragEnterEvent, QDropEvent, QIcon
+from PySide2.QtUiTools import QUiLoader
+from PySide2.QtWidgets import QApplication, QPushButton, QHBoxLayout, QLineEdit, QToolButton, QFileDialog, QInputDialog
+
 from windows_sorted import windows_sorted
-import natsort
-import locale
-import re
 
 
 # 自定义MyLineEdit类，继承自QLineEdit
@@ -42,6 +40,7 @@ class Quickmove(QObject):
         # 初始化
         # self.ui.setFixedSize(576, 482)  # 设置窗口大小，用于固定大小
         self.start_code = False  # 开始码，True则执行后续操作
+        self.check_config_file()
 
         # 替换line edit为MyLineEdit
         self.ui.my_line_edit_path_old = MyLineEdit()  # 新建控件
@@ -97,7 +96,7 @@ class Quickmove(QObject):
             config.add_section(new_config)
             config.set(new_config, 'model', 'file')
             config.set(new_config, 'auto_open', 'True')
-            config.set(new_config, 'folder_number', '1')
+            config.set(new_config, 'folder_number', '3')
             config.set(new_config, 'folder_old', '')
             for i in range(1, 11):
                 config.set(new_config, f'folder_new_{i}', '')
@@ -108,7 +107,7 @@ class Quickmove(QObject):
 
     def input_config_name(self):
         """输入配置文件名称"""
-        name, ok = QInputDialog.getText(self.ui, "配置文件", "输入配置名称:", text="new config")
+        name, _ = QInputDialog.getText(self.ui, "配置文件", "输入配置名称:", text="new config")
         if name == "":
             return self.input_config_name()
         else:
@@ -388,8 +387,9 @@ class Quickmove(QObject):
         try:
             self.makesure_main()
             self.start_code = True
+            self.ui.text_info.insertHtml("<font color='red' size='3'>" + "<br>" + "已确认文件夹并重置文件列表" + "</font>")
         except FileNotFoundError:
-            self.ui.text_info.insertHtml("<font color='red' size='3'>" + "<br>" + "测试2对应目录不存在" + "</font>")
+            self.ui.text_info.insertHtml("<font color='red' size='3'>" + "<br>" + "对应目录不存在" + "</font>")
 
     def makesure_main(self):
         """确认路径，遍历文件"""
@@ -444,11 +444,7 @@ class Quickmove(QObject):
     def check_hidden(file_path):
         """检查文件是否隐藏"""
         import ctypes
-
-        # 定义WinAPI函数
         GetFileAttributesW = ctypes.windll.kernel32.GetFileAttributesW
-
-        # 定义常量
         FILE_ATTRIBUTE_HIDDEN = 0x2
         INVALID_FILE_ATTRIBUTES = -1
 
@@ -532,15 +528,40 @@ class Quickmove(QObject):
             where_is_now = f'当前文件/文件夹：（{str(self.file_number + 1)}/{str(len(need_moves))}）'
         self.ui.label_2.setText(str(where_is_now))
 
+    @staticmethod
+    def check_config_file():
+        """检查config.ini文件是否存在"""
+        if not os.path.exists(os.path.join(os.getcwd(), 'config.ini')):
+            with open('config.ini', 'w', encoding='utf-8') as cw:
+                default_config = """[DEFAULT]
+show_config = 默认
+
+[默认]
+model = folder
+auto_open = True
+folder_number = 3
+folder_old = 
+folder_new_1 = 
+folder_new_2 = 
+folder_new_3 = 
+folder_new_4 = 
+folder_new_5 = 
+folder_new_6 = 
+folder_new_7 = 
+folder_new_8 = 
+folder_new_9 = 
+folder_new_10 = """
+                cw.write(default_config)
+
 
 def main():
     app = QApplication()
     with open("UbuntuStyle.qss", "r", encoding='utf-8') as f:
         style = f.read()
         app.setStyleSheet(style)
-    # app.setStyle('Fusion')
-    quickmove = Quickmove()
-    quickmove.ui.show()
+    show_ui = Quickmove()
+    show_ui.ui.setWindowIcon(QIcon('icon.ico'))
+    show_ui.ui.show()
     app.exec_()
 
 
