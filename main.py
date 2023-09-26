@@ -13,6 +13,7 @@ from PySide2.QtUiTools import QUiLoader
 from PySide2.QtWidgets import QMainWindow, QFileDialog, QInputDialog, QWidget, QHBoxLayout, QApplication
 
 from DialogRename import DialogRename
+from DropLineEdit import DropLineEdit
 from general_method import walk_path
 from personal_sort import windows_sorted
 from ui_main import Ui_MainWindow
@@ -133,8 +134,6 @@ class QuickMove(QMainWindow):
         self.code_start = False
 
         origin_folderpath = self.ui.lineedit_origin_path.text()
-        print(f'os.path.exists(origin_folderpath) {os.path.exists(origin_folderpath)}')
-        print(f'os.path.isfile(origin_folderpath) {os.path.isfile(origin_folderpath)}')
         if not os.path.exists(origin_folderpath) or os.path.isfile(origin_folderpath):
             self.ui.button_open_origin_path.setEnabled(False)
             self.ui.button_check_origin_path.setEnabled(False)
@@ -207,7 +206,6 @@ class QuickMove(QMainWindow):
         传参：
         info_type：日志的类型
         info_text：文本，str或list"""
-        print(info_type)
         current_time = time.strftime("%H:%M:%S ", time.localtime())
         text_time = "<font color='green' size='4'>" + current_time + "</font>"
         if info_text:
@@ -423,6 +421,9 @@ folder_move_{i}_suffix =
             widget_move.setLayout(layout_widget_move)
             main_layout.addWidget(widget_move)
             ui_widget_move.setObjectName(f'movewidgets_{i}')  # 设置对象名，方便后续使用sender获取
+            # 向用于存放文本框的布局中添加自定义LineEdit（直接导入ui无法自定义控件）
+            ui_widget_move.lineEdit_folderpath = DropLineEdit()
+            ui_widget_move.layout_place_lineEdit_folderpath.addWidget(ui_widget_move.lineEdit_folderpath)
             # 连接信号与槽函数
             ui_widget_move.button_number.clicked.connect(self.autowidget_move_to_folder)
             ui_widget_move.button_ask.clicked.connect(self.autowidget_ask_move_folder)
@@ -434,7 +435,6 @@ folder_move_{i}_suffix =
             path = config.get(current_config, f'folder_move_{i}_path')
             prefix = config.get(current_config, f'folder_move_{i}_prefix')
             suffix = config.get(current_config, f'folder_move_{i}_suffix')
-
             ui_widget_move.lineEdit_folderpath.setText(path)
             ui_widget_move.lineEdit_add_prefix.setText(prefix)
             ui_widget_move.lineEdit_add_suffix.setText(suffix)

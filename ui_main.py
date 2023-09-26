@@ -12,6 +12,7 @@ from PySide2.QtCore import *
 from PySide2.QtGui import *
 from PySide2.QtWidgets import *
 
+from DropLineEdit import DropLineEdit
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -41,7 +42,7 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout.addWidget(self.button_check_origin_path)
 
-        self.lineedit_origin_path = QLineEdit(self.widget_2)
+        self.lineedit_origin_path = DropLineEdit(self.widget_2)
         self.lineedit_origin_path.setObjectName(u"lineedit_origin_path")
         self.lineedit_origin_path.setMaximumSize(QSize(16777215, 16777215))
 
