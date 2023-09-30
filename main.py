@@ -15,7 +15,7 @@ from PySide2.QtWidgets import QMainWindow, QFileDialog, QInputDialog, QWidget, Q
 from DialogRename import DialogRename
 from DropLineEdit import DropLineEdit
 from general_method import walk_path
-from personal_sort import windows_sorted
+import WindowsSorted
 from ui_main import Ui_MainWindow
 
 
@@ -151,13 +151,13 @@ class QuickMove(QMainWindow):
 
     def initialize_task(self):
         """初始化移动任务"""
+        self.show_info(info_type='初始化')
         self.move_dict = dict()  # 初始化移动列表
         origin_path = self.ui.lineedit_origin_path.text()
         model = 'file' if self.ui.radiobutton_model_file.isChecked() else 'folder'
-        walk_list = walk_path(origin_path, model=model)  # 提取文件或文件夹（只有文件名）
-        walk_list_fullpath = [os.path.normpath(os.path.join(origin_path, i)) for i in walk_list]
+        walk_list = walk_path(origin_path, model=model)  # 提取文件或文件夹（仅1层下级目录）
         n = 0
-        for path in walk_list_fullpath:
+        for path in walk_list:
             self.move_dict[n] = {'origin_path': path, 'state': '', 'new_path': ''}
             n += 1
 
@@ -171,8 +171,6 @@ class QuickMove(QMainWindow):
         else:
             self.ui.label_current.setText('---没有文件---')
             self.ui.label_schedule.setText('-/-')
-
-        self.show_info(info_type='初始化')
 
     def current_changed(self):
         """在当前文件改变时执行相关操作"""
@@ -190,7 +188,9 @@ class QuickMove(QMainWindow):
                 if model == 'file':
                     os.startfile(self.move_dict[self.move_number_current]['origin_path'])
                 elif model == 'folder':
-                    self.open_folder_no_hidden(self.move_dict[self.move_number_current]['origin_path'])
+                    openfile = self.open_folder_no_hidden(self.move_dict[self.move_number_current]['origin_path'])
+                    if openfile is None:  # 如果打开文件夹中的第1个文件是空
+                        self.show_info('文件夹下级目录无文件')
 
         if self.move_number_current <= 0:
             self.ui.button_undo_pre.setEnabled(False)
@@ -238,10 +238,13 @@ class QuickMove(QMainWindow):
         elif info_type == '撤销操作-移动':
             text_info = "<font color='orange' size='4'>" + " 已撤销移动 " + "</font>"
             self.ui.text_info.insertHtml(text_time + text_info + text_origin_file + "<br>")
+        elif info_type == '文件夹下级目录无文件':
+            text_info = "<font color='red' size='4'>" + " 当前文件夹中无文件 " + "</font>"
+            self.ui.text_info.insertHtml(text_time + text_info + "<br>")
 
     @staticmethod
-    def open_folder_no_hidden(folder_path: str):
-        """打开传入路径文件夹中的第一个非隐藏文件"""
+    def open_folder_no_hidden(folder_path: str) -> Union[str, None]:
+        """打开传入路径文件夹中的第一个非隐藏文件，并返回打开文件的路径"""
 
         def check_hidden(path: str):
             """检查传入路径的隐藏属性"""
@@ -261,11 +264,15 @@ class QuickMove(QMainWindow):
             return is_hidden(path)
 
         temp_list = []
-        files = windows_sorted(folder_path, model='file')
+        files = WindowsSorted.sort_path(folder_path, filetype='file', depth=1)
         for i in files:
             if not check_hidden(i):  # 排除隐藏文件
                 temp_list.append(i)
-        os.startfile(temp_list[0])
+        if temp_list:
+            os.startfile(temp_list[0])
+            return temp_list[0]
+        else:
+            return None
 
     @staticmethod
     def create_config_section(section_name='默认', model_add=False):

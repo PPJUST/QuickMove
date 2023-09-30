@@ -1,6 +1,6 @@
 import ctypes
 
-from personal_sort import windows_sorted
+import WindowsSorted
 
 
 def walk_path(path: str, model: str) -> list:
@@ -26,7 +26,7 @@ def walk_path(path: str, model: str) -> list:
 
     if model == 'file':
         # 遍历路径中的所有文件
-        files_list = windows_sorted(path, model='file')
+        files_list = WindowsSorted.sort_path(path, filetype='file', depth=1)
         no_hidden_filespath_list = []
         for i in files_list:
             if not check_hidden(i):  # 排除隐藏文件
@@ -34,7 +34,7 @@ def walk_path(path: str, model: str) -> list:
         return no_hidden_filespath_list
     elif model == 'folder':
         # 遍历路径中的所有文件夹
-        folders_list = windows_sorted(path, model='folder')
+        folders_list = WindowsSorted.sort_path(path, filetype='folder', depth=1)
         no_hidden_folders_list = []
         for i in folders_list:
             if not check_hidden(i):  # 排除隐藏文件
