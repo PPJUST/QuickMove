@@ -92,7 +92,9 @@ def sort_list(list_origin: list, order: str = 'ASC') -> Union[list, SystemExit]:
     # 还原原始list
     list_sorted = []
     for item in list_convert_sorted:
-        list_sorted.append(dict_convert[item])
+        value_list = dict_convert[item]  # 提取值
+        value_list = sorted(value_list)  # 内部元素排序
+        list_sorted += value_list
 
     # 按升降序参数返回对应list
     if order.upper() == 'ASC':
@@ -106,7 +108,7 @@ def sort_list(list_origin: list, order: str = 'ASC') -> Union[list, SystemExit]:
 def __convert_list(list_origin: list) -> dict:
     """对传入的list进行处理，处理内部元素中的连续数字字符串
     传参：list_origin 原始的list
-    返回值：dict_convert 转换后的dict，键为新元素，值为原始元素"""
+    返回值：dict_convert 转换后的dict，键为新元素，值为原始元素的list（用于处理01、001补0后重复的情况）"""
     # 遍历内部元素，利用正则提取所有连续数字字符串，最后得到其中最长的数字字符串长度
     longest_length = 0  # 最长的连续数字字符串长度
     pattern = r'(\d+)'
@@ -116,9 +118,8 @@ def __convert_list(list_origin: list) -> dict:
             if len(i) > longest_length:
                 longest_length = len(i)
 
-    dict_convert = dict()  # 转换后的dict，键为新元素，值为原始元素
+    dict_convert = dict()  # 转换后的dict，键为新元素，值为原始元素的list（用于处理01、001补0后重复的情况）
     # 重新遍历内部元素，利用正则将数字字符串补0扩展长度
-    # 注意：需要考虑"01","001"补0后都为"0001"的情况
     for item in list_origin:
         item_split = re.split(pattern, item)  # 分离数字字符串
         item_convert = ''  # 转换后的item
@@ -127,6 +128,8 @@ def __convert_list(list_origin: list) -> dict:
                 item_convert += i.zfill(longest_length)  # 对数字补0
             else:
                 item_convert += i
-        dict_convert[item_convert] = item
+        if item_convert not in dict_convert:
+            dict_convert[item_convert] = []
+        dict_convert[item_convert].append(item)
 
     return dict_convert
