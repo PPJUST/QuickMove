@@ -349,10 +349,6 @@ folder_move_{i}_suffix =
         """新建配置文件，可传入新配置名"""
         print_function_info()
         self.code_update_config = False
-        try:
-            self.ui.combobox_config.currentTextChanged.disconnect(self.change_config)  # 先取消连接
-        except RuntimeError:
-            pass
         config, _ = self.change_setting_return_config()
 
         if not new_config:
@@ -366,25 +362,17 @@ folder_move_{i}_suffix =
 
             self.create_config_section(section_name=new_config, model_add=True)
 
-            config, _ = self.change_setting_return_config()
-            config.set('DEFAULT', 'config', new_config)
-            config.write(open('config.ini', 'w', encoding='utf-8'))
+            s_config, _ = self.change_setting_return_config()
+            s_config.set('DEFAULT', 'config', new_config)
+            s_config.write(open('config.ini', 'w', encoding='utf-8'))
 
-            self.ui.combobox_config.addItem(new_config)
             self.load_config()
 
     def delete_config(self):
         """删除配置文件"""
         print_function_info()
         self.code_update_config = False
-        try:
-            self.ui.combobox_config.currentTextChanged.disconnect(self.change_config)  # 先取消连接
-        except RuntimeError:
-            pass
         config, current_config = self.change_setting_return_config()
-
-        current_config_index = config.sections().index(current_config)
-        self.ui.combobox_config.removeItem(current_config_index)
 
         config.remove_section(current_config)
         config.write(open('config.ini', 'w', encoding='utf-8'))
@@ -396,6 +384,8 @@ folder_move_{i}_suffix =
         else:
             config.set('DEFAULT', 'config', config.sections()[0])
             config.write(open('config.ini', 'w', encoding='utf-8'))
+
+        self.load_config()
 
     def change_config(self):
         """选择配置文件"""
