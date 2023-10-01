@@ -406,6 +406,17 @@
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_3">
          <item>
+          <widget class="QPushButton" name="button_trash">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset>
+             <normaloff>res_icon/回收站.png</normaloff>res_icon/回收站.png</iconset>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QPushButton" name="button_pass">
            <property name="minimumSize">
             <size>

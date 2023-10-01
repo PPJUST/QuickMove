@@ -27,11 +27,11 @@ def walk_path(path: str, model: str) -> list:
     if model == 'file':
         # 遍历路径中的所有文件
         files_list = WindowsSorted.sort_path(path, filetype='file', depth=1)
-        no_hidden_filespath_list = []
+        no_hidden_filepath_list = []
         for i in files_list:
             if not check_hidden(i):  # 排除隐藏文件
-                no_hidden_filespath_list.append(i)
-        return no_hidden_filespath_list
+                no_hidden_filepath_list.append(i)
+        return no_hidden_filepath_list
     elif model == 'folder':
         # 遍历路径中的所有文件夹
         folders_list = WindowsSorted.sort_path(path, filetype='folder', depth=1)
@@ -40,3 +40,17 @@ def walk_path(path: str, model: str) -> list:
             if not check_hidden(i):  # 排除隐藏文件
                 no_hidden_folders_list.append(i)
         return no_hidden_folders_list
+
+
+def print_function_info(model: str = 'current'):
+    """打印当前/上一个执行的函数信息
+    传参：model 'current'/'last'"""
+    import time
+    import inspect
+
+    if model == 'current':
+        print(time.strftime('%H:%M:%S ', time.localtime()),
+              inspect.getframeinfo(inspect.currentframe().f_back).function)
+    elif model == 'last':
+        print(time.strftime('%H:%M:%S ', time.localtime()),
+              inspect.getframeinfo(inspect.currentframe().f_back.f_back).function)

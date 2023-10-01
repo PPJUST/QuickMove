@@ -1,5 +1,4 @@
 import configparser
-import ctypes
 import os
 import random
 import shutil
@@ -7,6 +6,7 @@ import string
 import time
 from typing import Union
 
+import send2trash
 from PySide2.QtCore import Signal
 from PySide2.QtGui import Qt, QIcon
 from PySide2.QtUiTools import QUiLoader
@@ -14,8 +14,7 @@ from PySide2.QtWidgets import QMainWindow, QFileDialog, QInputDialog, QWidget, Q
 
 from DialogRename import DialogRename
 from DropLineEdit import DropLineEdit
-from general_method import walk_path
-import WindowsSorted
+from general_method import *
 from ui_main import Ui_MainWindow
 
 
@@ -32,6 +31,7 @@ class QuickMove(QMainWindow):
         初始化
         """
         self.code_start = False  # 状态码，为True时才进行后续操作
+        self.code_update_config = False  # 状态码，为True时才可更新config
         self.ui.text_info.setTextInteractionFlags(Qt.NoTextInteraction)  # 禁止信息显示框被点击
         self.move_dict = dict()  # 移动的文件任务，格式：{1:{'origin_path':path, 'state':'', 'new_path':''}, 2:...}
         self.move_number_total = int()  # 移动文件总数
@@ -41,6 +41,7 @@ class QuickMove(QMainWindow):
         self.check_origin_path()
         self.ui.button_pass.setEnabled(False)
         self.ui.button_undo_pre.setEnabled(False)
+        self.ui.button_trash.setEnabled(False)
 
         """
         连接信号与槽函数
@@ -54,83 +55,102 @@ class QuickMove(QMainWindow):
         self.ui.button_add_config.clicked.connect(self.add_config)
         self.ui.button_delete_config.clicked.connect(self.delete_config)
         self.ui.combobox_config.currentTextChanged.connect(self.change_config)
+
+        self.ui.lineedit_origin_path.textChanged.connect(self.change_origin_folder)
+        self.ui.radiobutton_model_file.toggled.connect(self.change_model)
+        self.ui.radiobutton_model_folder.toggled.connect(self.change_model)
+        self.ui.checkbox_auto_open.toggled.connect(self.change_auto_open)
+        self.ui.checkbox_manual_rename.toggled.connect(self.change_manual_rename)
+        self.ui.lineedit_add_prefix.textChanged.connect(self.change_add_fix)
+        self.ui.lineedit_add_suffix.textChanged.connect(self.change_add_fix)
+        self.ui.spinbox_folder_number.valueChanged.connect(self.change_move_folder_number)
         # 日志文本框
         self.ui.text_info.textChanged.connect(
             lambda: self.ui.text_info.verticalScrollBar().setValue(self.ui.text_info.verticalScrollBar().maximum()))
         # 自定义信号
         self.signal_current_changed.connect(self.current_changed)
         self.signal_do_move.connect(self.do_move)
-        # 跳过、撤回、退出
+        # 右下角功能区
         self.ui.button_pass.clicked.connect(self.pass_current)
         self.ui.button_undo_pre.clicked.connect(self.undo_pre_action)
         self.ui.button_quit.clicked.connect(self.close)
+        self.ui.button_trash.clicked.connect(self.send_to_trash)
 
     def change_model(self):
         """修改模式"""
-        self.code_start = False
-
+        print_function_info()
         config, current_config = self.change_setting_return_config()
 
-        if self.ui.radiobutton_model_file.isChecked():
-            config.set(current_config, 'model', 'file')
-        else:
-            config.set(current_config, 'model', 'folder')
-        config.write(open('config.ini', 'w', encoding='utf-8'))
+        if self.code_update_config:
+            if self.ui.radiobutton_model_file.isChecked():
+                config.set(current_config, 'model', 'file')
+            else:
+                config.set(current_config, 'model', 'folder')
+            config.write(open('config.ini', 'w', encoding='utf-8'))
 
     def change_auto_open(self):
         """修改自动打开选项"""
+        print_function_info()
         config, current_config = self.change_setting_return_config()
 
-        if self.ui.checkbox_auto_open.isChecked():
-            config.set(current_config, 'auto_open', 'True')
-        else:
-            config.set(current_config, 'auto_open', 'False')
-        config.write(open('config.ini', 'w', encoding='utf-8'))
+        if self.code_update_config:
+            if self.ui.checkbox_auto_open.isChecked():
+                config.set(current_config, 'auto_open', 'True')
+            else:
+                config.set(current_config, 'auto_open', 'False')
+            config.write(open('config.ini', 'w', encoding='utf-8'))
 
     def change_manual_rename(self):
         """修改手动改名选项"""
+        print_function_info()
         config, current_config = self.change_setting_return_config()
 
-        if self.ui.checkbox_manual_rename.isChecked():
-            config.set(current_config, 'manual_rename', 'True')
-        else:
-            config.set(current_config, 'manual_rename', 'False')
-        config.write(open('config.ini', 'w', encoding='utf-8'))
+        if self.code_update_config:
+            if self.ui.checkbox_manual_rename.isChecked():
+                config.set(current_config, 'manual_rename', 'True')
+            else:
+                config.set(current_config, 'manual_rename', 'False')
+            config.write(open('config.ini', 'w', encoding='utf-8'))
 
     def change_add_fix(self):
         """修改通用前后缀"""
+        print_function_info()
         config, current_config = self.change_setting_return_config()
 
-        add_prefix = self.ui.lineedit_add_prefix.text().strip()
-        add_suffix = self.ui.lineedit_add_suffix.text().strip()
+        if self.code_update_config:
+            add_prefix = self.ui.lineedit_add_prefix.text().strip()
+            add_suffix = self.ui.lineedit_add_suffix.text().strip()
 
-        config.set(current_config, 'add_prefix_global', add_prefix)
-        config.set(current_config, 'add_suffix_global', add_suffix)
-        config.write(open('config.ini', 'w', encoding='utf-8'))
+            config.set(current_config, 'add_prefix_global', add_prefix)
+            config.set(current_config, 'add_suffix_global', add_suffix)
+            config.write(open('config.ini', 'w', encoding='utf-8'))
 
     def change_move_folder_number(self):
         """改变目标文件夹数"""
+        print_function_info()
         config, current_config = self.change_setting_return_config()
 
-        folder_number = self.ui.spinbox_folder_number.value()
-        self.create_move_widget()  # 更新移动组件数
+        if self.code_update_config:
+            folder_number = self.ui.spinbox_folder_number.value()
+            self.create_move_widget()  # 更新移动组件数
 
-        config.set(current_config, 'folder_number', str(folder_number))
-        config.write(open('config.ini', 'w', encoding='utf-8'))
+            config.set(current_config, 'folder_number', str(folder_number))
+            config.write(open('config.ini', 'w', encoding='utf-8'))
 
     def change_origin_folder(self):
         """改变原始文件夹"""
-        self.code_start = False
-
+        print_function_info()
         config, current_config = self.change_setting_return_config()
 
-        origin_folder = self.ui.lineedit_origin_path.text().strip()
+        if self.code_update_config:
+            origin_folder = self.ui.lineedit_origin_path.text().strip()
 
-        config.set(current_config, 'folder_origin', origin_folder)
-        config.write(open('config.ini', 'w', encoding='utf-8'))
+            config.set(current_config, 'folder_origin', origin_folder)
+            config.write(open('config.ini', 'w', encoding='utf-8'))
 
     def check_origin_path(self):
         """检查原始文件夹路径的规范"""
+        print_function_info()
         self.code_start = False
 
         origin_folderpath = self.ui.lineedit_origin_path.text()
@@ -145,12 +165,14 @@ class QuickMove(QMainWindow):
 
     def ask_origin_path(self):
         """弹出原始文件夹选框"""
+        print_function_info()
         folder_path = QFileDialog.getExistingDirectory(self, "选择文件夹")
         if folder_path:
             self.ui.lineedit_origin_path.setText(folder_path)
 
     def initialize_task(self):
         """初始化移动任务"""
+        print_function_info()
         self.show_info(info_type='初始化')
         self.move_dict = dict()  # 初始化移动列表
         origin_path = self.ui.lineedit_origin_path.text()
@@ -174,6 +196,7 @@ class QuickMove(QMainWindow):
 
     def current_changed(self):
         """在当前文件改变时执行相关操作"""
+        print_function_info()
         if self.move_number_current + 1 > self.move_number_total:
             self.ui.label_schedule.setText(f'-/{self.move_number_total}')
             self.ui.label_current.setText('---没有更多文件---')
@@ -196,16 +219,23 @@ class QuickMove(QMainWindow):
             self.ui.button_undo_pre.setEnabled(False)
         else:
             self.ui.button_undo_pre.setEnabled(True)
+
         if self.move_number_current >= self.move_number_total:
             self.ui.button_pass.setEnabled(False)
         else:
             self.ui.button_pass.setEnabled(True)
+
+        if 0 <= self.move_number_current < self.move_number_total:
+            self.ui.button_trash.setEnabled(True)
+        else:
+            self.ui.button_trash.setEnabled(False)
 
     def show_info(self, info_type: str, info_text: Union[str, list] = None):
         """在ui中显示日志
         传参：
         info_type：日志的类型
         info_text：文本，str或list"""
+        print_function_info()
         current_time = time.strftime("%H:%M:%S ", time.localtime())
         text_time = "<font color='green' size='4'>" + current_time + "</font>"
         if info_text:
@@ -241,10 +271,17 @@ class QuickMove(QMainWindow):
         elif info_type == '文件夹下级目录无文件':
             text_info = "<font color='red' size='4'>" + " 当前文件夹中无文件 " + "</font>"
             self.ui.text_info.insertHtml(text_time + text_info + "<br>")
+        elif info_type == '删除文件':
+            text_info = "<font color='red' size='4'>" + " 删除到回收站，并移除任务 " + "</font>"
+            self.ui.text_info.insertHtml(text_time + text_info + text_origin_file + "<br>")
+        # elif info_type == '撤销操作-删除文件':
+        #     text_info = "<font color='orange' size='4'>" + " 已删除文件请自行移出回收站 " + "</font>"
+        #     self.ui.text_info.insertHtml(text_time + text_info + text_origin_file + "<br>")
 
     @staticmethod
     def open_folder_no_hidden(folder_path: str) -> Union[str, None]:
         """打开传入路径文件夹中的第一个非隐藏文件，并返回打开文件的路径"""
+        print_function_info()
 
         def check_hidden(path: str):
             """检查传入路径的隐藏属性"""
@@ -277,6 +314,7 @@ class QuickMove(QMainWindow):
     @staticmethod
     def create_config_section(section_name='默认', model_add=False):
         """检查初始配置文件"""
+        print_function_info()
         default_config_top = """
 [DEFAULT]
 config = 默认
@@ -309,12 +347,19 @@ folder_move_{i}_suffix =
 
     def add_config(self, new_config: str = None):
         """新建配置文件，可传入新配置名"""
+        print_function_info()
+        self.code_update_config = False
+        try:
+            self.ui.combobox_config.currentTextChanged.disconnect(self.change_config)  # 先取消连接
+        except RuntimeError:
+            pass
         config, _ = self.change_setting_return_config()
 
         if not new_config:
             new_config, _ = QInputDialog.getText(self, "新建配置文件", "名称:", text="new config")
+
+        new_config = new_config.replace(' ', '_')  # ini中的section不允许空格
         if new_config:
-            self.connect_config_signal(model_connect=False)
             if new_config in config:  # 如果有重复，则添加随机后缀
                 random_string = ''.join(random.choices(string.ascii_lowercase, k=6))
                 new_config = f"{new_config}_{random_string}"
@@ -330,26 +375,33 @@ folder_move_{i}_suffix =
 
     def delete_config(self):
         """删除配置文件"""
+        print_function_info()
+        self.code_update_config = False
+        try:
+            self.ui.combobox_config.currentTextChanged.disconnect(self.change_config)  # 先取消连接
+        except RuntimeError:
+            pass
         config, current_config = self.change_setting_return_config()
-        self.connect_config_signal(model_connect=False)
 
         current_config_index = config.sections().index(current_config)
         self.ui.combobox_config.removeItem(current_config_index)
 
         config.remove_section(current_config)
-        config.set('DEFAULT', 'config', config.sections()[0])
-        if config.sections():  # 如果删除后没有配置文件了，则自动新增一个默认的配置文件
-            self.add_config(new_config='new config')
         config.write(open('config.ini', 'w', encoding='utf-8'))
 
-        self.load_config()
+        if not config.sections():  # 如果删除后没有配置文件了，则自动新增一个默认的配置文件
+            config.set('DEFAULT', 'config', '默认')
+            config.write(open('config.ini', 'w', encoding='utf-8'))
+            self.add_config(new_config='默认')
+        else:
+            config.set('DEFAULT', 'config', config.sections()[0])
+            config.write(open('config.ini', 'w', encoding='utf-8'))
 
     def change_config(self):
         """选择配置文件"""
-        self.code_start = False
-
+        print_function_info()
+        self.code_update_config = False
         config, _ = self.change_setting_return_config()
-        self.connect_config_signal(model_connect=False)
 
         choose_config = self.ui.combobox_config.currentText()
         config.set('DEFAULT', 'config', choose_config)
@@ -358,6 +410,7 @@ folder_move_{i}_suffix =
 
     def load_config(self):
         """加载配置文件"""
+        print_function_info()
         # 读取配置文件
         config, current_config = self.change_setting_return_config()
 
@@ -371,9 +424,17 @@ folder_move_{i}_suffix =
         add_suffix_global = config.get(current_config, 'add_suffix_global')
 
         # 修改配置文件下拉框
-        self.ui.combobox_config.clear()
-        self.ui.combobox_config.addItems(config.sections())
-        self.ui.combobox_config.setCurrentText(current_config)
+        try:
+            self.ui.combobox_config.currentTextChanged.disconnect(self.change_config)  # 先取消连接
+            self.ui.combobox_config.clear()
+            self.ui.combobox_config.addItems(config.sections())
+            self.ui.combobox_config.setCurrentText(current_config)
+            self.ui.combobox_config.currentTextChanged.connect(self.change_config)  # 再添加连接
+        except RuntimeError:
+            self.ui.combobox_config.clear()
+            self.ui.combobox_config.addItems(config.sections())
+            self.ui.combobox_config.setCurrentText(current_config)
+
         # 修改原文件夹
         self.ui.lineedit_origin_path.setText(folder_origin)
         # 修改模式
@@ -400,12 +461,12 @@ folder_move_{i}_suffix =
         self.ui.spinbox_folder_number.setValue(folder_number)
         # 生成移动组件
         self.create_move_widget()
-
-        # 重新连接槽函数
-        self.connect_config_signal(model_connect=True)
+        # 设置可以更新conifg
+        self.code_update_config = True
 
     def create_move_widget(self):
         """生成移动组件"""
+        print_function_info()
         config, current_config = self.change_setting_return_config()
 
         # 清空原有组件
@@ -452,6 +513,7 @@ folder_move_{i}_suffix =
                 ui_widget_move.lineEdit_folderpath.setStyleSheet('border: 1px solid red;')
 
     def autowidget_move_to_folder(self):
+        print_function_info()
         sender_widget = self.sender().parentWidget()  # 获取父控件对象
 
         if self.code_start:
@@ -463,6 +525,7 @@ folder_move_{i}_suffix =
             self.signal_do_move.emit(None, None, None)
 
     def autowidget_ask_move_folder(self):
+        print_function_info()
         sender_widget = self.sender().parentWidget()  # 获取父控件对象
 
         folder_path = QFileDialog.getExistingDirectory(self, "选择文件夹")
@@ -470,12 +533,14 @@ folder_move_{i}_suffix =
             sender_widget.lineEdit_folderpath.setText(folder_path)
 
     def autowidget_open_move_folder(self):
+        print_function_info()
         sender_widget = self.sender().parentWidget()  # 获取父控件对象
 
         path = sender_widget.lineEdit_folderpath.text()
         os.startfile(path)
 
     def autowidget_change_move_folder(self):
+        print_function_info()
         sender_widget = self.sender().parentWidget()  # 获取父控件对象
         sender_widget_name = sender_widget.objectName()  # 获取父控件对象名
         movefolder_number = sender_widget_name.split('_')[1]  # 提取编号
@@ -498,6 +563,7 @@ folder_move_{i}_suffix =
             sender_widget.lineEdit_folderpath.setStyleSheet('')
 
     def autowidget_change_add_fix(self):
+        print_function_info()
         sender_widget = self.sender().parentWidget()  # 获取父控件对象
         sender_widget_name = sender_widget.objectName()  # 获取父控件对象名
         movefolder_number = sender_widget_name.split('_')[1]  # 提取编号
@@ -511,6 +577,7 @@ folder_move_{i}_suffix =
 
     def change_setting_return_config(self):
         """修改设置时，返回config对象与当前的配置名"""
+        print_function_info()
         self.code_start = False
         config = configparser.ConfigParser()
         config.read("config.ini", encoding='utf-8')
@@ -518,29 +585,9 @@ folder_move_{i}_suffix =
 
         return config, current_config
 
-    def connect_config_signal(self, model_connect: bool = True):
-        """连接或断联与信号相关的槽函数"""
-        if model_connect:
-            self.ui.lineedit_origin_path.textChanged.connect(self.change_origin_folder)
-            self.ui.radiobutton_model_file.toggled.connect(self.change_model)
-            self.ui.radiobutton_model_folder.toggled.connect(self.change_model)
-            self.ui.checkbox_auto_open.toggled.connect(self.change_auto_open)
-            self.ui.checkbox_manual_rename.toggled.connect(self.change_manual_rename)
-            self.ui.lineedit_add_prefix.textChanged.connect(self.change_add_fix)
-            self.ui.lineedit_add_suffix.textChanged.connect(self.change_add_fix)
-            self.ui.spinbox_folder_number.valueChanged.connect(self.change_move_folder_number)
-        else:
-            self.ui.lineedit_origin_path.textChanged.disconnect(self.change_origin_folder)
-            self.ui.radiobutton_model_file.toggled.disconnect(self.change_model)
-            self.ui.radiobutton_model_folder.toggled.disconnect(self.change_model)
-            self.ui.checkbox_auto_open.toggled.disconnect(self.change_auto_open)
-            self.ui.checkbox_manual_rename.toggled.disconnect(self.change_manual_rename)
-            self.ui.lineedit_add_prefix.textChanged.disconnect(self.change_add_fix)
-            self.ui.lineedit_add_suffix.textChanged.disconnect(self.change_add_fix)
-            self.ui.spinbox_folder_number.valueChanged.disconnect(self.change_move_folder_number)
-
     def do_move(self, move_to_folder: str, add_prefix: str, add_suffix: str):
         """执行移动操作，传入目标文件夹路径str，添加前缀str，添加后缀str"""
+        print_function_info()
         if not self.code_start:  # 检查启动代码
             self.show_info(info_type='未确认启动代码')
             return
@@ -601,6 +648,7 @@ folder_move_{i}_suffix =
 
     def pass_current(self):
         """跳过当前文件"""
+        print_function_info()
         self.move_dict[self.move_number_current]['state'] = 'pass'
         current_file = self.move_dict[self.move_number_current]['origin_path']
 
@@ -610,6 +658,7 @@ folder_move_{i}_suffix =
 
     def undo_pre_action(self):
         """撤销上一次操作"""
+        print_function_info()
         self.move_number_current -= 1
         current_file = self.move_dict[self.move_number_current]['origin_path']
         pre_action = self.move_dict[self.move_number_current]['state']
@@ -622,6 +671,30 @@ folder_move_{i}_suffix =
             shutil.move(new_path, origin_path)
             self.signal_current_changed.emit()
             self.show_info(info_type='撤销操作-移动', info_text=[current_file])
+        # elif pre_action == 'trash':  # 如果上一次操作是删除到回收站，则不做处理但提示
+        #     self.signal_current_changed.emit()
+        #     self.show_info(info_type='撤销操作-删除文件', info_text=[current_file])
+
+    def send_to_trash(self):
+        """删除文件至回收站"""
+        print_function_info()
+        current_file = self.move_dict[self.move_number_current]['origin_path']
+        send2trash.send2trash(current_file)
+        # 直接删除移动任务的键
+        self.move_dict.pop(self.move_number_current)
+        # 将后续任务的顺序键前移
+        key_number = self.move_number_current
+        while True:
+            if key_number + 1 in self.move_dict:
+                self.move_dict[key_number] = self.move_dict[key_number + 1]
+                self.move_dict.pop(key_number + 1)
+                key_number += 1  # 下一个
+            else:
+                break
+
+        self.move_number_total = len(self.move_dict)
+        self.show_info(info_type='删除文件', info_text=[current_file])
+        self.signal_current_changed.emit()  # 直接删除移动任务，所以不需要更新当前进度
 
 
 def main():

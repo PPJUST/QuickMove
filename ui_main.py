@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'uinjRdKE.ui'
+## Form generated from reading UI file 'ui_mainRvuyUj.ui'
 ##
 ## Created by: Qt User Interface Compiler version 5.15.2
 ##
@@ -11,8 +11,8 @@
 from PySide2.QtCore import *
 from PySide2.QtGui import *
 from PySide2.QtWidgets import *
-
 from DropLineEdit import DropLineEdit
+
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -259,29 +259,37 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_3 = QHBoxLayout()
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
+        self.button_trash = QPushButton(self.widget)
+        self.button_trash.setObjectName(u"button_trash")
+        icon5 = QIcon()
+        icon5.addFile(u"res_icon/\u56de\u6536\u7ad9.png", QSize(), QIcon.Normal, QIcon.Off)
+        self.button_trash.setIcon(icon5)
+
+        self.horizontalLayout_3.addWidget(self.button_trash)
+
         self.button_pass = QPushButton(self.widget)
         self.button_pass.setObjectName(u"button_pass")
         self.button_pass.setMinimumSize(QSize(0, 0))
         self.button_pass.setMaximumSize(QSize(16777215, 16777215))
-        icon5 = QIcon()
-        icon5.addFile(u"res_icon/\u8df3\u8fc7.png", QSize(), QIcon.Normal, QIcon.Off)
-        self.button_pass.setIcon(icon5)
+        icon6 = QIcon()
+        icon6.addFile(u"res_icon/\u8df3\u8fc7.png", QSize(), QIcon.Normal, QIcon.Off)
+        self.button_pass.setIcon(icon6)
 
         self.horizontalLayout_3.addWidget(self.button_pass)
 
         self.button_undo_pre = QPushButton(self.widget)
         self.button_undo_pre.setObjectName(u"button_undo_pre")
-        icon6 = QIcon()
-        icon6.addFile(u"res_icon/\u64a4\u56de.png", QSize(), QIcon.Normal, QIcon.Off)
-        self.button_undo_pre.setIcon(icon6)
+        icon7 = QIcon()
+        icon7.addFile(u"res_icon/\u64a4\u56de.png", QSize(), QIcon.Normal, QIcon.Off)
+        self.button_undo_pre.setIcon(icon7)
 
         self.horizontalLayout_3.addWidget(self.button_undo_pre)
 
         self.button_quit = QPushButton(self.widget)
         self.button_quit.setObjectName(u"button_quit")
-        icon7 = QIcon()
-        icon7.addFile(u"res_icon/\u9000\u51fa.png", QSize(), QIcon.Normal, QIcon.Off)
-        self.button_quit.setIcon(icon7)
+        icon8 = QIcon()
+        icon8.addFile(u"res_icon/\u9000\u51fa.png", QSize(), QIcon.Normal, QIcon.Off)
+        self.button_quit.setIcon(icon8)
 
         self.horizontalLayout_3.addWidget(self.button_quit)
 
@@ -317,6 +325,7 @@ class Ui_MainWindow(object):
         self.label.setText(QCoreApplication.translate("MainWindow", u"\u901a\u7528\u524d\u7f00", None))
         self.label_6.setText(QCoreApplication.translate("MainWindow", u"\u901a\u7528\u540e\u7f00", None))
         self.label_5.setText(QCoreApplication.translate("MainWindow", u"\u76ee\u6807\u6587\u4ef6\u5939\u6570", None))
+        self.button_trash.setText("")
         self.button_pass.setText("")
         self.button_undo_pre.setText("")
         self.button_quit.setText("")
