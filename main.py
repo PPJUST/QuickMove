@@ -33,9 +33,21 @@ class QuickMove(QMainWindow):
         self.code_start = False  # 状态码，为True时才进行后续操作
         self.code_update_config = False  # 状态码，为True时才可更新config
         self.ui.text_info.setTextInteractionFlags(Qt.NoTextInteraction)  # 禁止信息显示框被点击
-        self.move_dict = dict()  # 移动的文件任务，格式：{1:{'origin_path':path, 'state':'', 'new_path':''}, 2:...}
+
+        """
+        下面4个变量之间的联系：
+        self.move_dict 为初始的任务dict，包含所有执行的信息
+        self.move_order_list 为上述dict的key值，如果使用了删除功能则删除对应key元素
+        self.move_number_total 为上述list的内部项目数量
+        self.move_number_current 为移动编号，只做±1处理
+        
+        获取当前任务的方法：self.move_dict[self.move_order_list[self.move_number_current]]
+        """
+        self.move_dict = dict()  # 移动的文件任务dict，格式：{1:{'origin_path':path, 'state':'', 'new_path':''}, 2:...}
+        self.move_order_list = list()  # 移动的文件任务list，格式[1,2,3]，专用于处理使用删除功能后编号缺失的问题
         self.move_number_total = int()  # 移动文件总数
         self.move_number_current = int()  # 当前移动文件编号，从0开始
+
         self.create_config_section()
         self.load_config()
         self.check_origin_path()
@@ -175,19 +187,23 @@ class QuickMove(QMainWindow):
         print_function_info()
         self.show_info(info_type='初始化')
         self.move_dict = dict()  # 初始化移动列表
+        self.move_order_list = list()  # 初始化
         origin_path = self.ui.lineedit_origin_path.text()
         model = 'file' if self.ui.radiobutton_model_file.isChecked() else 'folder'
         walk_list = walk_path(origin_path, model=model)  # 提取文件或文件夹（仅1层下级目录）
         n = 0
+        # 创建初始移动任务dict
         for path in walk_list:
             self.move_dict[n] = {'origin_path': path, 'state': '', 'new_path': ''}
+            self.move_order_list.append(n)
             n += 1
 
-        if self.move_dict:
-            self.move_number_total = len(self.move_dict)
+        if self.move_order_list:
+            self.move_number_total = len(self.move_order_list)
             self.code_start = True
             self.move_number_current = 0
-            self.ui.label_current.setText(os.path.split(self.move_dict[self.move_number_current]['origin_path'])[1])
+            current_number = self.move_order_list[self.move_number_current]
+            self.ui.label_current.setText(os.path.split(self.move_dict[current_number]['origin_path'])[1])
             self.signal_current_changed.emit()
             self.ui.button_pass.setEnabled(True)
         else:
@@ -203,15 +219,17 @@ class QuickMove(QMainWindow):
         else:
             # 在ui上显示当前移动进度
             self.ui.label_schedule.setText(f'{self.move_number_current + 1}/{self.move_number_total}')
-            self.ui.label_current.setText(os.path.split(self.move_dict[self.move_number_current]['origin_path'])[1])
+            current_number = self.move_order_list[self.move_number_current]
+            self.ui.label_current.setText(os.path.split(self.move_dict[current_number]['origin_path'])[1])
             # 根据选项是否自动打开文件
             code_auto_open = self.ui.checkbox_auto_open.isChecked()
             model = 'file' if self.ui.radiobutton_model_file.isChecked() else 'folder'
             if code_auto_open:
+                current_number = self.move_order_list[self.move_number_current]
                 if model == 'file':
-                    os.startfile(self.move_dict[self.move_number_current]['origin_path'])
+                    os.startfile(self.move_dict[current_number]['origin_path'])
                 elif model == 'folder':
-                    openfile = self.open_folder_no_hidden(self.move_dict[self.move_number_current]['origin_path'])
+                    openfile = self.open_folder_no_hidden(self.move_dict[current_number]['origin_path'])
                     if openfile is None:  # 如果打开文件夹中的第1个文件是空
                         self.show_info('文件夹下级目录无文件')
 
@@ -470,20 +488,31 @@ folder_move_{i}_suffix =
         for i in range(1, widget_number + 1):
             # 添加组件
             ui_widget_move = QUiLoader().load('ui_widget_move.ui')
-            widget_move = QWidget()
-            widget_move.setMinimumHeight(60)
-            widget_move.setMaximumHeight(60)
+            place_widget = QWidget()
+            place_widget.setMinimumHeight(60)
+            place_widget.setMaximumHeight(60)
             layout_widget_move = QHBoxLayout()
-            layout_widget_move.setContentsMargins(0, 0, 0, 0)
+            layout_widget_move.setContentsMargins(2, 2, 2, 2)
             layout_widget_move.addWidget(ui_widget_move)
-            widget_move.setLayout(layout_widget_move)
-            main_layout.addWidget(widget_move)
+            place_widget.setLayout(layout_widget_move)
+            main_layout.addWidget(place_widget)
             ui_widget_move.setObjectName(f'movewidgets_{i}')  # 设置对象名，方便后续使用sender获取
+            # 添加颜色以增加辨识度
+            place_widget.setObjectName('place_widget')
+            red = random.randint(0, 255)
+            green = random.randint(0, 255)
+            blue = random.randint(0, 255)
+            rgb_color = f'rgb({red}, {green}, {blue})'
+            border_style = '{' + f'border: 2px solid {rgb_color};' + '}'
+            background_style = '{' + f'background-color: {rgb_color};' + '}'
+            print(border_style, background_style)
+            place_widget.setStyleSheet(f'#place_widget {border_style}')
+            ui_widget_move.button_move.setStyleSheet(f'#button_move {background_style}')
             # 向用于存放文本框的布局中添加自定义LineEdit（直接导入ui无法自定义控件）
             ui_widget_move.lineEdit_folderpath = DropLineEdit()
             ui_widget_move.layout_place_lineEdit_folderpath.addWidget(ui_widget_move.lineEdit_folderpath)
             # 连接信号与槽函数
-            ui_widget_move.button_number.clicked.connect(self.autowidget_move_to_folder)
+            ui_widget_move.button_move.clicked.connect(self.autowidget_move_to_folder)
             ui_widget_move.button_ask.clicked.connect(self.autowidget_ask_move_folder)
             ui_widget_move.button_open.clicked.connect(self.autowidget_open_move_folder)
             ui_widget_move.lineEdit_folderpath.textChanged.connect(self.autowidget_change_move_folder)
@@ -498,7 +527,7 @@ folder_move_{i}_suffix =
             ui_widget_move.lineEdit_add_suffix.setText(suffix)
             # 首次检查路径规范
             if not os.path.exists(path) or os.path.isfile(path):
-                ui_widget_move.button_number.setEnabled(False)
+                ui_widget_move.button_move.setEnabled(False)
                 ui_widget_move.button_open.setEnabled(False)
                 ui_widget_move.lineEdit_folderpath.setStyleSheet('border: 1px solid red;')
 
@@ -544,11 +573,11 @@ folder_move_{i}_suffix =
 
         # 检查路径规范
         if not os.path.exists(folder_move) or os.path.isfile(folder_move):
-            sender_widget.button_number.setEnabled(False)
+            sender_widget.button_move.setEnabled(False)
             sender_widget.button_open.setEnabled(False)
             sender_widget.lineEdit_folderpath.setStyleSheet('border: 1px solid red;')
         else:
-            sender_widget.button_number.setEnabled(True)
+            sender_widget.button_move.setEnabled(True)
             sender_widget.button_open.setEnabled(True)
             sender_widget.lineEdit_folderpath.setStyleSheet('')
 
@@ -586,7 +615,8 @@ folder_move_{i}_suffix =
             self.show_info(info_type='已完成全部任务')
             return
 
-        current_file = self.move_dict[self.move_number_current]['origin_path']
+        current_number = self.move_order_list[self.move_number_current]
+        current_file = self.move_dict[current_number]['origin_path']
 
         if not os.path.exists(current_file):
             self.show_info(info_type='原文件不存在')
@@ -631,16 +661,18 @@ folder_move_{i}_suffix =
             # 更新日志
             self.show_info(info_type='移动文件', info_text=[current_file, new_file])
             # 更新变量
-            self.move_dict[self.move_number_current]['state'] = 'move'
-            self.move_dict[self.move_number_current]['new_path'] = new_file
+            current_number = self.move_order_list[self.move_number_current]
+            self.move_dict[current_number]['state'] = 'move'
+            self.move_dict[current_number]['new_path'] = new_file
             self.move_number_current += 1
             self.signal_current_changed.emit()
 
     def pass_current(self):
         """跳过当前文件"""
         print_function_info()
-        self.move_dict[self.move_number_current]['state'] = 'pass'
-        current_file = self.move_dict[self.move_number_current]['origin_path']
+        current_number = self.move_order_list[self.move_number_current]
+        self.move_dict[current_number]['state'] = 'pass'
+        current_file = self.move_dict[current_number]['origin_path']
 
         self.show_info(info_type='跳过文件', info_text=[current_file])
         self.move_number_current += 1
@@ -650,14 +682,15 @@ folder_move_{i}_suffix =
         """撤销上一次操作"""
         print_function_info()
         self.move_number_current -= 1
-        current_file = self.move_dict[self.move_number_current]['origin_path']
-        pre_action = self.move_dict[self.move_number_current]['state']
+        current_number = self.move_order_list[self.move_number_current]
+        current_file = self.move_dict[current_number]['origin_path']
+        pre_action = self.move_dict[current_number]['state']
         if pre_action == 'pass':  # 如果上一次操作是跳过，则不做其他处理
             self.signal_current_changed.emit()
             self.show_info(info_type='撤销操作-跳过', info_text=[current_file])
         elif pre_action == 'move':  # 如果上一次操作是移动，则移回原文件夹
-            new_path = self.move_dict[self.move_number_current]['new_path']
-            origin_path = self.move_dict[self.move_number_current]['origin_path']
+            new_path = self.move_dict[current_number]['new_path']
+            origin_path = self.move_dict[current_number]['origin_path']
             shutil.move(new_path, origin_path)
             self.signal_current_changed.emit()
             self.show_info(info_type='撤销操作-移动', info_text=[current_file])
@@ -668,21 +701,13 @@ folder_move_{i}_suffix =
     def send_to_trash(self):
         """删除文件至回收站"""
         print_function_info()
-        current_file = self.move_dict[self.move_number_current]['origin_path']
+        current_number = self.move_order_list[self.move_number_current]
+        current_file = self.move_dict[current_number]['origin_path']
         send2trash.send2trash(current_file)
         # 直接删除移动任务的键
-        self.move_dict.pop(self.move_number_current)
-        # 将后续任务的顺序键前移
-        key_number = self.move_number_current
-        while True:
-            if key_number + 1 in self.move_dict:
-                self.move_dict[key_number] = self.move_dict[key_number + 1]
-                self.move_dict.pop(key_number + 1)
-                key_number += 1  # 下一个
-            else:
-                break
+        self.move_order_list.remove(current_number)
 
-        self.move_number_total = len(self.move_dict)
+        self.move_number_total = len(self.move_order_list)
         self.show_info(info_type='删除文件', info_text=[current_file])
         self.signal_current_changed.emit()  # 直接删除移动任务，所以不需要更新当前进度
 

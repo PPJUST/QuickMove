@@ -30,7 +30,7 @@
     <number>0</number>
    </property>
    <item>
-    <widget class="QToolButton" name="button_number">
+    <widget class="QToolButton" name="button_move">
      <property name="minimumSize">
       <size>
        <width>60</width>
