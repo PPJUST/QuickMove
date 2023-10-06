@@ -631,7 +631,7 @@ folder_move_{i}_suffix =
             else:
                 old_filename = os.path.split(current_file)[1]
                 old_filetitle = old_filename
-                file_suffix = 'file'
+                file_suffix = ''
 
             # 根据前后缀组合目标文件名
             target_filetitle = add_prefix_global + add_prefix + old_filetitle + add_suffix_global + add_suffix
