@@ -38,6 +38,7 @@ class WidgetMoveFolder(QFrame):
         self.ui.toolButton_open_folder.setIcon(QIcon(ICON_OPEN_FOLDER))
         self.ui.toolButton_clear_folder.setIcon(QIcon(ICON_CLEAR))
         self.load_setting()
+        self.ui.pushButton_hotkey.setEnabled(False)
 
         # 连接信号与槽函数
         self.ui.toolButton_move.clicked.connect(self.do_move)

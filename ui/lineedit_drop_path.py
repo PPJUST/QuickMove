@@ -17,6 +17,7 @@ class LineEditDropPath(QLineEdit):
         super().__init__()
         self.setAcceptDrops(True)
         self.setReadOnly(True)
+        self.setPlaceholderText('拖入文件到此处...')
 
         # 设置一个QTime定时更新检查路径有效性
         self.qtimer_check_path = QTimer()

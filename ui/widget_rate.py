@@ -33,6 +33,8 @@ class WidgetRate(QWidget):
         os.startfile(dirpath)
 
     def reset_current_index(self, text):
+        if text == 0:
+            text = '-'
         self.ui.label_current_index.setText(str(text))
 
     def reset_total_count(self, text):

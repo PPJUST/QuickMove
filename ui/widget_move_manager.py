@@ -1,4 +1,5 @@
 # 移动功能的整个控件组
+import os
 
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QIcon
@@ -17,6 +18,9 @@ class WidgetMoveManager(QWidget):
     signal_skipped = Signal(str)
     signal_deleted = Signal(str)
     signal_cancelled = Signal(str)
+    signal_file_not_exist = Signal(str)
+    signal_completed = Signal()
+    signal_file_occupied = Signal(str)
 
     def __init__(self):
         super().__init__()
@@ -53,6 +57,7 @@ class WidgetMoveManager(QWidget):
         index = self.task_dict.current_index
         # 超限
         if index == 0:
+            self.signal_completed.emit()  # 发送全部完成信号
             self.ui.pushButton_skip.setEnabled(False)
             self.ui.pushButton_delete.setEnabled(False)
         else:
@@ -90,23 +95,53 @@ class WidgetMoveManager(QWidget):
         if self.task_dict.current_index == 0:  # 不在超限时进行移动操作
             return
         current_path = self.task_dict.current_path
-        new_path = self.task_dict.operation_move(target_folder)
-        self.signal_moved.emit(current_path, new_path)
+        if current_path and os.path.exists(current_path):
+            new_path = self.task_dict.operation_move(target_folder)
+            if new_path:
+                self.signal_moved.emit(current_path, new_path)
+            else:  # 文件被占用
+                self.signal_file_occupied.emit(current_path)
+
+        else:
+            self.task_dict.operation_skip()
+            self.signal_file_not_exist.emit(current_path)
+
+        self.check_rate()
 
     def skip_current(self):
         """跳过当前任务"""
         current_path = self.task_dict.current_path
-        self.task_dict.operation_skip()
-        self.signal_skipped.emit(current_path)
+        if current_path and os.path.exists(current_path):
+            self.task_dict.operation_skip()
+            self.signal_skipped.emit(current_path)
+        else:
+            self.task_dict.operation_skip()
+            self.signal_file_not_exist.emit(current_path)
+
+        self.check_rate()
 
     def delete_current(self):
         """删除当前任务对应的文件"""
         current_path = self.task_dict.current_path
-        self.task_dict.operation_delete()
-        self.signal_deleted.emit(current_path)
+        if current_path and os.path.exists(current_path):
+            is_succeed = self.task_dict.operation_delete()
+            if is_succeed:
+                self.signal_deleted.emit(current_path)
+            else:
+                self.signal_file_occupied.emit(current_path)
+        else:
+            self.task_dict.operation_skip()
+            self.signal_file_not_exist.emit(current_path)
+
+        self.check_rate()
 
     def cancel_last(self):
         """撤回上一个任务"""
         self.task_dict.operation_cancel()
         current_path = self.task_dict.current_path
         self.signal_cancelled.emit(current_path)
+
+        if not current_path or not os.path.exists(current_path):
+            self.signal_file_not_exist.emit(current_path)
+
+        self.check_rate()

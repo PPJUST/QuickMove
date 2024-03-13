@@ -1,4 +1,4 @@
-# 常量
+# 常量设置
 
 # 文件
 CONFIG_FILE = 'config.ini'

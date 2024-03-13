@@ -19,6 +19,7 @@ class WidgetSettings(QWidget):
         self.ui.pushButton_information.setIcon(QIcon(ICON_INFORMATION))
         self.ui.pushButton_hotkeys_setting.setIcon(QIcon(ICON_HOTKEY))
         self.load_setting()
+        self.ui.pushButton_hotkeys_setting.setEnabled(False)
 
         # 连接信号与槽函数
         self.ui.buttonGroup_mode_move.buttonClicked.connect(self.change_mode_move)

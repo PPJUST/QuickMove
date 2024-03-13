@@ -92,24 +92,33 @@ def is_hidden_file(path: str):
     return is_hidden(path)
 
 
-def delete_file(path: str):
-    """删除文件/文件夹"""
-    send2trash.send2trash(path)
+def delete_file(path: str) -> bool:
+    """删除文件/文件夹
+    :return: bool，是否成功删除"""
+    try:
+        send2trash.send2trash(path)
+        return True
+    except PermissionError:  # 如果文件被占用，则返回False
+        return False
 
 
 def move_file(path: str, target_filetitle: str, target_folder: str):
     """移动文件/文件夹至指定文件夹"""
-    if not os.path.exists(target_folder) or os.path.isfile(target_folder):
-        return False
-
     # 生成新文件名
     new_filename = create_nodup_filename(path, target_filetitle, target_folder)
     # 先重命名原文件
     parent_dirpath = os.path.dirname(path)
     new_path = os.path.normpath(os.path.join(parent_dirpath, new_filename))
     if new_path != path:
-        os.rename(path, new_path)
+        try:
+            os.rename(path, new_path)
+        except PermissionError:  # 如果文件被占用，则返回False
+            return False
+
     # 再进行移动
-    finally_path = shutil.move(new_path, target_folder)
+    try:
+        finally_path = shutil.move(new_path, target_folder)
+    except PermissionError:  # 如果文件被占用，则返回False
+        return False
 
     return os.path.normpath(finally_path)

@@ -34,7 +34,9 @@ class TaskDict(dict):
     def operation_delete(self):
         """对当前索引对应的文件执行删除操作"""
         # 执行操作
-        function_normal.delete_file(self.current_path)
+        is_succeed = function_normal.delete_file(self.current_path)
+        if not is_succeed:  # 如果操作失败，则直接返回
+            return False
 
         # 修改字典数据（删除+重新排列）
         self.pop(self.current_index)
@@ -54,6 +56,8 @@ class TaskDict(dict):
 
         # 是否自动打开
         self._auto_open()
+
+        return True
 
     def operation_move(self, target_folder: str):
         """对当前索引对应的文件执行移动操作"""
@@ -108,7 +112,7 @@ class TaskDict(dict):
 
     def _auto_open(self):
         """根据设置自动打开文件/文件夹"""
-        if self.current_index:
+        if self.current_path and os.path.exists(self.current_path):
             is_open_current = function_config.get_setting_auto_open_current()
             if is_open_current:
                 function_open_file.open_path(self.current_path)

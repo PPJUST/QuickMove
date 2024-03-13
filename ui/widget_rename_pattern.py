@@ -25,11 +25,15 @@ class WidgetRenamePattern(QWidget):
     def load_setting(self):
         """加载设置"""
         self.ui.lineEdit_pattern.setText(function_config.get_setting_rename_pattern())
+        self.show_pattern_chs()
 
     def change_pattern(self):
         pattern = self.ui.lineEdit_pattern.text()
         function_config.set_setting_rename_pattern(pattern)
-        self.ui.lineEdit_pattern.setToolTip(f'文件名模板：{function_rename_pattern.get_pattern_chs()}')
+        self.show_pattern_chs()
+
+    def show_pattern_chs(self):
+        self.ui.label_pattern.setText(function_rename_pattern.get_pattern_chs())
 
     def check_feasible(self):
         """检查规则是否符合Windows文件名规范"""

@@ -54,6 +54,9 @@ class Main(QMainWindow):
         self.widget_move_manager.signal_skipped.connect(self.current_file_skipped)
         self.widget_move_manager.signal_deleted.connect(self.current_file_deleted)
         self.widget_move_manager.signal_cancelled.connect(self.last_file_cancelled)
+        self.widget_move_manager.signal_completed.connect(self.complete_task)
+        self.widget_move_manager.signal_file_not_exist.connect(self.file_not_exist)
+        self.widget_move_manager.signal_file_occupied.connect(self.file_occupied)
 
     def reload_setting(self):
         """切换配置文件后重新加载设置"""
@@ -106,6 +109,24 @@ class Main(QMainWindow):
         self.update_rate()
         # 更新历史记录控件组
         self.textbrowser_history.record_cancel(old_path)
+
+    def complete_task(self):
+        """完成任务清单"""
+        # 更新进度控件组
+        self.update_rate()
+        # 更新历史记录控件组
+        self.textbrowser_history.record_complete()
+
+    def file_not_exist(self, path):
+        """当前处理的路径不存在"""
+        # 更新进度控件组
+        self.update_rate()
+        # 更新历史记录控件组
+        self.textbrowser_history.record_not_exist(path)
+
+    def file_occupied(self, path):
+        """当前处理的文件被占用导致无法操作"""
+        self.textbrowser_history.record_file_occupied(path)
 
 
 if __name__ == '__main__':
