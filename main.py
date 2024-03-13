@@ -14,6 +14,7 @@ from ui.widget_rate import WidgetRate
 from ui.widget_rename_pattern import WidgetRenamePattern
 from ui.widget_select_config import WidgetSelectConfig
 from ui.widget_settings import WidgetSettings
+from ui.window_tip import WindowTip
 
 
 class Main(QMainWindow):
@@ -75,6 +76,8 @@ class Main(QMainWindow):
         self.update_rate()
         # 更新历史记录控件组
         self.textbrowser_history.record_initialize()
+        # 弹出提示窗口（需要实例化）
+        self.window_tip = WindowTip('完成初始化')
 
     def update_rate(self):
         """更新进度控件组"""
@@ -88,6 +91,8 @@ class Main(QMainWindow):
         self.update_rate()
         # 更新历史记录控件组
         self.textbrowser_history.record_move(old_path, new_path)
+        # 弹出提示窗口（需要实例化）
+        self.window_tip = WindowTip('完成移动')
 
     def current_file_skipped(self, old_path):
         """对当前任务执行了跳过操作"""
@@ -95,6 +100,8 @@ class Main(QMainWindow):
         self.update_rate()
         # 更新历史记录控件组
         self.textbrowser_history.record_skip(old_path)
+        # 弹出提示窗口（需要实例化）
+        self.window_tip = WindowTip('跳过文件')
 
     def current_file_deleted(self, old_path):
         """对当前任务执行了删除操作"""
@@ -102,6 +109,8 @@ class Main(QMainWindow):
         self.update_rate()
         # 更新历史记录控件组
         self.textbrowser_history.record_delete(old_path)
+        # 弹出提示窗口（需要实例化）
+        self.window_tip = WindowTip('删除文件')
 
     def last_file_cancelled(self, old_path):
         """对上一个任务执行了撤销操作"""
@@ -109,6 +118,8 @@ class Main(QMainWindow):
         self.update_rate()
         # 更新历史记录控件组
         self.textbrowser_history.record_cancel(old_path)
+        # 弹出提示窗口（需要实例化）
+        self.window_tip = WindowTip('撤销操作')
 
     def complete_task(self):
         """完成任务清单"""
@@ -116,6 +127,8 @@ class Main(QMainWindow):
         self.update_rate()
         # 更新历史记录控件组
         self.textbrowser_history.record_complete()
+        # 弹出提示窗口（需要实例化）
+        self.window_tip = WindowTip('完成全部任务')
 
     def file_not_exist(self, path):
         """当前处理的路径不存在"""
@@ -123,10 +136,14 @@ class Main(QMainWindow):
         self.update_rate()
         # 更新历史记录控件组
         self.textbrowser_history.record_not_exist(path)
+        # 弹出提示窗口（需要实例化）
+        self.window_tip = WindowTip('当前文件不存在')
 
     def file_occupied(self, path):
         """当前处理的文件被占用导致无法操作"""
         self.textbrowser_history.record_file_occupied(path)
+        # 弹出提示窗口（需要实例化）
+        self.window_tip = WindowTip('当前文件被占用')
 
 
 if __name__ == '__main__':
