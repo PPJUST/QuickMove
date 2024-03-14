@@ -5,6 +5,7 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import *
 
 from constant import ICON_OPEN_FOLDER
+from module import function_open_file
 from ui.ui_widget_rate import Ui_Form
 
 
@@ -21,16 +22,11 @@ class WidgetRate(QWidget):
         self.ui.toolButton_open_dir.clicked.connect(self.open_dir)
 
     def open_dir(self):
-        """打开当前进度对应的文件夹路径"""
+        """打开当前进度对应的路径"""
         path = self.ui.label_current_path.text()
         if not path or not os.path.exists(path):
             return
-
-        if os.path.isdir(path):
-            dirpath = path
-        else:
-            dirpath = os.path.basename(path)
-        os.startfile(dirpath)
+        function_open_file.open_path(path)
 
     def reset_current_index(self, text):
         if text == 0:

@@ -19,15 +19,8 @@ def check_default_config():
     except configparser.NoOptionError:  # 如果DEFAULT项不存在则报错
         config.set('DEFAULT', 'config', '默认')
         config.set('DEFAULT', 'analyse_dirpath', '')
-        config.set('DEFAULT', 'hotkey_move_1', '')
-        config.set('DEFAULT', 'hotkey_move_2', '')
-        config.set('DEFAULT', 'hotkey_move_3', '')
-        config.set('DEFAULT', 'hotkey_move_4', '')
-        config.set('DEFAULT', 'hotkey_move_5', '')
-        config.set('DEFAULT', 'hotkey_move_6', '')
-        config.set('DEFAULT', 'hotkey_move_7', '')
-        config.set('DEFAULT', 'hotkey_move_8', '')
-        config.set('DEFAULT', 'hotkey_move_9', '')
+        for i in range(1, 10):
+            config.set('DEFAULT', f'hotkey_move_{i}', f'<alt>+{i}')
         config.write(open(CONFIG_FILE, 'w', encoding='utf-8'))
 
     if not config.sections():
@@ -171,20 +164,20 @@ def set_setting_mode_walk(value):
     set_value_of_key('mode_walk', value)
 
 
-def get_setting_auto_open_current():
-    return get_value_of_key('auto_open_current') == 'True'
+def get_setting_auto_open_file():
+    return get_value_of_key('auto_open_file') == 'True'
 
 
-def set_setting_auto_open_current(value):
-    set_value_of_key('auto_open_current', value)
+def set_setting_auto_open_file(value):
+    set_value_of_key('auto_open_file', value)
 
 
-def get_setting_auto_open_parent():
-    return get_value_of_key('auto_open_parent') == 'True'
+def get_setting_auto_open_path():
+    return get_value_of_key('auto_open_path') == 'True'
 
 
-def set_setting_auto_open_parent(value):
-    set_value_of_key('auto_open_parent', value)
+def set_setting_auto_open_path(value):
+    set_value_of_key('auto_open_path', value)
 
 
 def get_setting_reconfirm_rename():

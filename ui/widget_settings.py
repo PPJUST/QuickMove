@@ -1,5 +1,5 @@
 # 相关设置项的控件
-
+from PySide6.QtCore import Signal
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import *
 
@@ -10,6 +10,7 @@ from ui.ui_widget_settings import Ui_Form
 
 class WidgetSettings(QWidget):
     """相关设置项的控件"""
+    signal_special_setting_changed = Signal(object)
 
     def __init__(self):
         super().__init__()
@@ -23,9 +24,11 @@ class WidgetSettings(QWidget):
 
         # 连接信号与槽函数
         self.ui.buttonGroup_mode_move.buttonClicked.connect(self.change_mode_move)
+        self.ui.buttonGroup_mode_move.buttonClicked.connect(self.signal_special_setting_changed.emit)
         self.ui.buttonGroup_mode_walk.buttonClicked.connect(self.change_mode_walk)
-        self.ui.checkBox_auto_open_current.stateChanged.connect(self.change_auto_open_current)
-        self.ui.checkBox_auto_open_parent.stateChanged.connect(self.change_auto_open_parent)
+        self.ui.buttonGroup_mode_walk.buttonClicked.connect(self.signal_special_setting_changed.emit)
+        self.ui.checkBox_auto_open_file.stateChanged.connect(self.change_auto_open_file)
+        self.ui.checkBox_auto_open_path.stateChanged.connect(self.change_auto_open_path)
         self.ui.checkBox_reconfirm_rename.stateChanged.connect(self.change_reconfirm_rename)
         self.ui.pushButton_information.clicked.connect(self.open_information)
         self.ui.pushButton_hotkeys_setting.clicked.connect(self.set_hotkeys)
@@ -45,8 +48,8 @@ class WidgetSettings(QWidget):
         else:
             self.ui.radioButton_mode_walk_all.setChecked(True)
         # 自动打开
-        self.ui.checkBox_auto_open_current.setChecked(function_config.get_setting_auto_open_current())
-        self.ui.checkBox_auto_open_parent.setChecked(function_config.get_setting_auto_open_parent())
+        self.ui.checkBox_auto_open_file.setChecked(function_config.get_setting_auto_open_file())
+        self.ui.checkBox_auto_open_path.setChecked(function_config.get_setting_auto_open_path())
         # 手动重命名
         self.ui.checkBox_reconfirm_rename.setChecked(function_config.get_setting_reconfirm_rename())
 
@@ -64,15 +67,15 @@ class WidgetSettings(QWidget):
         else:
             function_config.set_setting_mode_walk('all')
 
-    def change_auto_open_current(self):
+    def change_auto_open_file(self):
         """修改自动打开选项"""
-        is_checked = self.ui.checkBox_auto_open_current.isChecked()
-        function_config.set_setting_auto_open_current(is_checked)
+        is_checked = self.ui.checkBox_auto_open_file.isChecked()
+        function_config.set_setting_auto_open_file(is_checked)
 
-    def change_auto_open_parent(self):
+    def change_auto_open_path(self):
         """修改自动打开选项"""
-        is_checked = self.ui.checkBox_auto_open_parent.isChecked()
-        function_config.set_setting_auto_open_parent(is_checked)
+        is_checked = self.ui.checkBox_auto_open_path.isChecked()
+        function_config.set_setting_auto_open_path(is_checked)
 
     def change_reconfirm_rename(self):
         """手动重命名选项"""

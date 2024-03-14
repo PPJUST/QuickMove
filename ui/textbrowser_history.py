@@ -26,6 +26,12 @@ class TextBrowserHistory(QTextBrowser):
         text_info = "<font color='purple' size='4'>" + " 文件夹检查已完成 " + "</font>"
         self.insertHtml(text_time + text_info + "<br>")
 
+    def record_need_init(self):
+        """记录-更改设置后需要初始化"""
+        text_time = self._get_time_text()
+        text_info = "<font color='red' size='4'>" + " 已修改设置，需要重新初始化 " + "</font>"
+        self.insertHtml(text_time + text_info + "<br>")
+
     def record_complete(self):
         """记录-完成全部任务"""
         text_time = self._get_time_text()
@@ -59,7 +65,7 @@ class TextBrowserHistory(QTextBrowser):
         """记录-跳过"""
         text_time = self._get_time_text()
         text_path = self._get_path_text(path)
-        text_info = "<font color='yellow' size='4'>" + " 跳过 " + "</font>"
+        text_info = "<font color='pink' size='4'>" + " 跳过 " + "</font>"
         self.insertHtml(text_time + text_info + text_path + "<br>")
 
     def record_delete(self, path):

@@ -1,29 +1,23 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'ui_widget_settingsssnpxl.ui'
+## Form generated from reading UI file 'ui_widget_settingswQDPQP.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.5.3
+## Created by: Qt User Interface Compiler version 6.1.3
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
 
-from PySide6.QtCore import (QCoreApplication, QDate, QDateTime, QLocale,
-    QMetaObject, QObject, QPoint, QRect,
-    QSize, QTime, QUrl, Qt)
-from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
-    QFont, QFontDatabase, QGradient, QIcon,
-    QImage, QKeySequence, QLinearGradient, QPainter,
-    QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QButtonGroup, QCheckBox, QFrame,
-    QGridLayout, QPushButton, QRadioButton, QSizePolicy,
-    QVBoxLayout, QWidget)
+from PySide6.QtCore import *  # type: ignore
+from PySide6.QtGui import *  # type: ignore
+from PySide6.QtWidgets import *  # type: ignore
+
 
 class Ui_Form(object):
     def setupUi(self, Form):
         if not Form.objectName():
             Form.setObjectName(u"Form")
-        Form.resize(231, 123)
+        Form.resize(231, 128)
         self.gridLayout = QGridLayout(Form)
         self.gridLayout.setSpacing(3)
         self.gridLayout.setObjectName(u"gridLayout")
@@ -61,15 +55,15 @@ class Ui_Form(object):
         self.verticalLayout_7.setSpacing(3)
         self.verticalLayout_7.setObjectName(u"verticalLayout_7")
         self.verticalLayout_7.setContentsMargins(3, 0, 0, 0)
-        self.checkBox_auto_open_current = QCheckBox(self.frame_3)
-        self.checkBox_auto_open_current.setObjectName(u"checkBox_auto_open_current")
+        self.checkBox_auto_open_file = QCheckBox(self.frame_3)
+        self.checkBox_auto_open_file.setObjectName(u"checkBox_auto_open_file")
 
-        self.verticalLayout_7.addWidget(self.checkBox_auto_open_current)
+        self.verticalLayout_7.addWidget(self.checkBox_auto_open_file)
 
-        self.checkBox_auto_open_parent = QCheckBox(self.frame_3)
-        self.checkBox_auto_open_parent.setObjectName(u"checkBox_auto_open_parent")
+        self.checkBox_auto_open_path = QCheckBox(self.frame_3)
+        self.checkBox_auto_open_path.setObjectName(u"checkBox_auto_open_path")
 
-        self.verticalLayout_7.addWidget(self.checkBox_auto_open_parent)
+        self.verticalLayout_7.addWidget(self.checkBox_auto_open_path)
 
         self.checkBox_reconfirm_rename = QCheckBox(self.frame_3)
         self.checkBox_reconfirm_rename.setObjectName(u"checkBox_reconfirm_rename")
@@ -135,8 +129,8 @@ class Ui_Form(object):
         Form.setWindowTitle(QCoreApplication.translate("Form", u"Form", None))
         self.radioButton_mode_move_file.setText(QCoreApplication.translate("Form", u"\u6587\u4ef6\u6a21\u5f0f", None))
         self.radioButton_mode_move_folder.setText(QCoreApplication.translate("Form", u"\u6587\u4ef6\u5939\u6a21\u5f0f", None))
-        self.checkBox_auto_open_current.setText(QCoreApplication.translate("Form", u"\u81ea\u52a8\u6253\u5f00\u6587\u4ef6", None))
-        self.checkBox_auto_open_parent.setText(QCoreApplication.translate("Form", u"\u81ea\u52a8\u6253\u5f00\u6240\u5728\u76ee\u5f55", None))
+        self.checkBox_auto_open_file.setText(QCoreApplication.translate("Form", u"\u81ea\u52a8\u6253\u5f00\u6587\u4ef6", None))
+        self.checkBox_auto_open_path.setText(QCoreApplication.translate("Form", u"\u81ea\u52a8\u6253\u5f00\u8def\u5f84", None))
         self.checkBox_reconfirm_rename.setText(QCoreApplication.translate("Form", u"\u624b\u52a8\u6539\u540d", None))
         self.radioButton_mode_walk_single.setText(QCoreApplication.translate("Form", u"\u904d\u5386\u5355\u5c42\u4e0b\u7ea7", None))
         self.radioButton_mode_walk_all.setText(QCoreApplication.translate("Form", u"\u904d\u5386\u5168\u90e8\u5c42\u7ea7", None))

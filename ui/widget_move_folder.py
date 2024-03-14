@@ -25,7 +25,7 @@ class WidgetMoveFolder(QFrame):
         # 初始化
         self.target_dirpath = None  # 目标文件夹
         self.index = index  # 当前控件组的编号（从1开始）
-        self.hotkey_move = None
+        self._hotkey_thread = None
 
         # 添加自定义控件
         self.lineEdit_drop = LineEditDropPath()
@@ -54,10 +54,15 @@ class WidgetMoveFolder(QFrame):
         path = function_config.get_setting_target_dirpath(self.index)
         self.lineEdit_drop.setText(path)
         self.target_dirpath = path
+        # 绑定快捷键
+        hotkey = function_config.get_move_hotkey(self.index)
+        self.ui.pushButton_hotkey.setText(hotkey)
+        self.bind_hotkey(hotkey)
 
     def do_move(self):
         """移动当前任务"""
-        self.signal_click_move_button.emit(self.target_dirpath)
+        if self.target_dirpath and os.path.exists(self.target_dirpath):
+            self.signal_click_move_button.emit(self.target_dirpath)
 
     def reset_path(self, path: str):
         self.lineEdit_drop.setText(path)
@@ -87,17 +92,23 @@ class WidgetMoveFolder(QFrame):
 
     def set_hotkey(self):
         """设置快捷键"""
+        new_hotkey = None  # 备忘录 - TBD 弹出dialog
+        function_config.set_move_hotkey(self.index, new_hotkey)
+        self.bind_hotkey(new_hotkey)  # 重新绑定
 
-    def bind_hotkey(self):
+    def bind_hotkey(self, hotkey):
         """绑定快捷键"""
-        hotkey = function_config.get_move_hotkey(self.index)
-        self.hotkey_move = keyboard.GlobalHotKeys({
+        if self._hotkey_thread:  # 先停止再绑定
+            self._hotkey_thread.stop()
+        self._hotkey_thread = keyboard.GlobalHotKeys({
             hotkey: self.do_move, })
 
     def enable_hotkey(self):
         """启用快捷键"""
-        self.hotkey_move.start()
+        hotkey = self.ui.pushButton_hotkey.text()
+        self.bind_hotkey(hotkey)  # pynput的监听线程在stop后无法重新start，需要重新绑定
+        self._hotkey_thread.start()
 
     def disable_hotkey(self):
         """停用快捷键"""
-        self.hotkey_move.stop()
+        self._hotkey_thread.stop()

@@ -61,6 +61,13 @@
        </property>
       </spacer>
      </item>
+     <item>
+      <widget class="QPushButton" name="pushButton_enable_hotkey">
+       <property name="text">
+        <string>快捷键已启用/禁用</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
    <item>
@@ -74,7 +81,7 @@
         <x>0</x>
         <y>0</y>
         <width>338</width>
-        <height>243</height>
+        <height>241</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">

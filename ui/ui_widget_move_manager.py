@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'ui_widget_move_managerkchbwr.ui'
+## Form generated from reading UI file 'ui_widget_move_managerdBgfaC.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.1.3
 ##
@@ -40,6 +40,11 @@ class Ui_Form(object):
 
         self.horizontalLayout.addItem(self.horizontalSpacer)
 
+        self.pushButton_enable_hotkey = QPushButton(Form)
+        self.pushButton_enable_hotkey.setObjectName(u"pushButton_enable_hotkey")
+
+        self.horizontalLayout.addWidget(self.pushButton_enable_hotkey)
+
 
         self.verticalLayout_2.addLayout(self.horizontalLayout)
 
@@ -48,7 +53,7 @@ class Ui_Form(object):
         self.scrollArea.setWidgetResizable(True)
         self.widget_move_folders = QWidget()
         self.widget_move_folders.setObjectName(u"widget_move_folders")
-        self.widget_move_folders.setGeometry(QRect(0, 0, 338, 243))
+        self.widget_move_folders.setGeometry(QRect(0, 0, 338, 241))
         self.verticalLayout = QVBoxLayout(self.widget_move_folders)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.verticalLayout.setContentsMargins(3, 3, 3, 3)
@@ -94,6 +99,7 @@ class Ui_Form(object):
     def retranslateUi(self, Form):
         Form.setWindowTitle(QCoreApplication.translate("Form", u"Form", None))
         self.label.setText(QCoreApplication.translate("Form", u"\u6587\u4ef6\u5939\u6570\u91cf\uff1a", None))
+        self.pushButton_enable_hotkey.setText(QCoreApplication.translate("Form", u"\u5feb\u6377\u952e\u5df2\u542f\u7528/\u7981\u7528", None))
         self.pushButton_skip.setText(QCoreApplication.translate("Form", u"\u8df3\u8fc7", None))
         self.pushButton_cancel.setText(QCoreApplication.translate("Form", u"\u64a4\u9500", None))
         self.pushButton_delete.setText(QCoreApplication.translate("Form", u"\u5220\u9664", None))

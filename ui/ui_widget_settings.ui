@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>231</width>
-    <height>123</height>
+    <height>128</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -101,16 +101,16 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="QCheckBox" name="checkBox_auto_open_current">
+       <widget class="QCheckBox" name="checkBox_auto_open_file">
         <property name="text">
          <string>自动打开文件</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QCheckBox" name="checkBox_auto_open_parent">
+       <widget class="QCheckBox" name="checkBox_auto_open_path">
         <property name="text">
-         <string>自动打开所在目录</string>
+         <string>自动打开路径</string>
         </property>
        </widget>
       </item>
@@ -217,7 +217,7 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="buttonGroup_mode_move"/>
   <buttongroup name="buttonGroup_mode_walk"/>
+  <buttongroup name="buttonGroup_mode_move"/>
  </buttongroups>
 </ui>

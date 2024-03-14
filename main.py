@@ -32,6 +32,7 @@ class Main(QMainWindow):
         self.widget_analyse_path = WidgetAnalyseFolder()
         self.ui.layout_widget_drop.addWidget(self.widget_analyse_path)
         self.widget_analyse_path.signal_analysed.connect(self.analyse_path)
+        self.widget_analyse_path.signal_dropped.connect(self.clear_task)
 
         self.widget_rate = WidgetRate()
         self.ui.layout_rate.addWidget(self.widget_rate)
@@ -42,9 +43,11 @@ class Main(QMainWindow):
         self.widget_select_config = WidgetSelectConfig()
         self.ui.layout_config.addWidget(self.widget_select_config)
         self.widget_select_config.signal_config_changed.connect(self.reload_setting)
+        self.widget_select_config.signal_config_changed.connect(self.clear_task)
 
         self.widget_settings = WidgetSettings()
         self.ui.layout_settings.addWidget(self.widget_settings)
+        self.widget_settings.signal_special_setting_changed.connect(self.clear_task)
 
         self.widget_rename_pattern = WidgetRenamePattern()
         self.ui.layout_rename_pattern.addWidget(self.widget_rename_pattern)
@@ -68,16 +71,27 @@ class Main(QMainWindow):
 
     def analyse_path(self, extract_paths: list):
         """分析路径"""
-        #  更新任务字典
+        # 更新任务字典
         self.task_dict.set_task(extract_paths)
-        # 任务字典连接移动控件组
-        self.widget_move_manager.connect_task_dict(self.task_dict)
         # 更新进度控件组
         self.update_rate()
         # 更新历史记录控件组
         self.textbrowser_history.record_initialize()
         # 弹出提示窗口（需要实例化）
         self.window_tip = WindowTip('完成初始化')
+        # 任务字典连接移动控件组
+        self.widget_move_manager.connect_task_dict(self.task_dict)
+
+    def clear_task(self):
+        """修改部分选项后，清空任务，防止不期望的操作"""
+        # 清空任务字典
+        self.task_dict.set_task([])
+        # 更新进度控件组
+        self.update_rate()
+        # 更新历史记录控件组
+        self.textbrowser_history.record_need_init()
+        # 弹出提示窗口（需要实例化）
+        self.window_tip = WindowTip('已修改设置，需要重新初始化')
 
     def update_rate(self):
         """更新进度控件组"""

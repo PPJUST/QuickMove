@@ -61,7 +61,7 @@ def _extract_dirs_single(parent_dirpath: str):
     listdir = os.listdir(parent_dirpath)
     paths = [os.path.normpath(os.path.join(parent_dirpath, i)) for i in listdir]
     folders = [i for i in paths if os.path.isdir(i)]
-    folders_filter = [i for i in folders if not _is_has_child_folder(i)]  # 剔除含有子文件夹的项
+    folders_filter = [i for i in folders if not _is_has_child_folder(i) and not _is_empty_folder(i)]  # 剔除含有子文件夹和空的项
 
     return folders_filter
 
@@ -72,7 +72,7 @@ def _extract_dirs_all(parent_dirpath: str):
     for dirpath, dirnames, filenames in os.walk(parent_dirpath):
         for j in dirnames:
             dirpath_join = os.path.normpath(os.path.join(dirpath, j))
-            if not _is_has_child_folder(dirpath_join):  # 剔除含有子文件夹的项
+            if not _is_has_child_folder(dirpath_join) and not _is_empty_folder(dirpath_join):  # 剔除含有子文件夹和空的项
                 folders_filter.append(dirpath_join)
 
     return folders_filter
@@ -85,3 +85,10 @@ def _is_has_child_folder(dirpath):
     child_folders = [i for i in paths if os.path.isdir(i)]
 
     return True if child_folders else False
+
+
+def _is_empty_folder(dirpath):
+    """文件夹是否为空"""
+    listdir = os.listdir(dirpath)
+
+    return len(listdir) == 0

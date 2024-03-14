@@ -4,26 +4,29 @@
 CONFIG_FILE = 'config.ini'
 
 # 图标
-ICON_ADD = 'icon/icon_add.png'
-ICON_ANALYSE = 'icon/icon_analyse.png'
-ICON_ASK_FOLDER = 'icon/icon_ask_folder.png'
-ICON_CANCEL = 'icon/icon_cancel.png'
-ICON_DELETE = 'icon/icon_delete.png'
-ICON_MAIN = 'icon/icon_main.ico'
-ICON_MOVE = 'icon/icon_move.png'
-ICON_OPEN_FOLDER = 'icon/icon_open_folder.png'
-ICON_QUIT = 'icon/icon_quit.png'
-ICON_RECYCLE_BIN = 'icon/icon_recycle_bin.png'
-ICON_SKIP = 'icon/icon_skip.png'
-ICON_INFORMATION = 'icon/icon_information.png'
-ICON_HOTKEY = 'icon/icon_hotkey.png'
-ICON_CLEAR = 'icon/icon_clear.png'
+_ICON_FOLDER = 'icon/'
+ICON_ADD = _ICON_FOLDER + 'icon_add.png'
+ICON_ANALYSE = _ICON_FOLDER + 'icon_analyse.png'
+ICON_ASK_FOLDER = _ICON_FOLDER + 'icon_ask_folder.png'
+ICON_CANCEL = _ICON_FOLDER + 'icon_cancel.png'
+ICON_DELETE = _ICON_FOLDER + 'icon_delete.png'
+ICON_MAIN = _ICON_FOLDER + 'icon_main.ico'
+ICON_MOVE = _ICON_FOLDER + 'icon_move.png'
+ICON_OPEN_FOLDER = _ICON_FOLDER + 'icon_open_folder.png'
+ICON_QUIT = _ICON_FOLDER + 'icon_quit.png'
+ICON_RECYCLE_BIN = _ICON_FOLDER + 'icon_recycle_bin.png'
+ICON_SKIP = _ICON_FOLDER + 'icon_skip.png'
+ICON_INFORMATION = _ICON_FOLDER + 'icon_information.png'
+ICON_HOTKEY = _ICON_FOLDER + 'icon_hotkey.png'
+ICON_CLEAR = _ICON_FOLDER + 'icon_clear.png'
+ICON_ENABLE = _ICON_FOLDER + 'icon_enable.png'
+ICON_DISABLE = _ICON_FOLDER + 'icon_disable.png'
 
 # 配置项
 CONFIG_KEYS = {'mode_move': 'file',
                'mode_walk': 'single',
-               'auto_open_current': True,
-               'auto_open_parent': False,
+               'auto_open_file': False,
+               'auto_open_path': False,
                'reconfirm_rename': False,
                'rename_pattern': '',
                'target_dir_count': 3,

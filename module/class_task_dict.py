@@ -113,13 +113,13 @@ class TaskDict(dict):
     def _auto_open(self):
         """根据设置自动打开文件/文件夹"""
         if self.current_path and os.path.exists(self.current_path):
-            is_open_current = function_config.get_setting_auto_open_current()
+            is_open_current = function_config.get_setting_auto_open_file()
             if is_open_current:
-                function_open_file.open_path(self.current_path)
+                function_open_file.open_file(self.current_path)
 
-            is_open_parent = function_config.get_setting_auto_open_parent()
+            is_open_parent = function_config.get_setting_auto_open_path()
             if is_open_parent:
-                function_open_file.open_parent_folder(self.current_path)
+                function_open_file.open_path(self.current_path)
 
     def _set_operation(self, operation: str):
         """设置当前索引对应的字典的key"""
