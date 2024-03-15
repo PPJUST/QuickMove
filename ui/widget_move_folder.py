@@ -4,7 +4,7 @@ import os.path
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import *
-from pynput import keyboard
+from module import pynput_fix_hotkey
 
 from constant import ICON_ASK_FOLDER, ICON_MOVE, ICON_OPEN_FOLDER, ICON_CLEAR
 from module import function_config
@@ -100,7 +100,7 @@ class WidgetMoveFolder(QFrame):
         """绑定快捷键"""
         if self._hotkey_thread:  # 先停止再绑定
             self._hotkey_thread.stop()
-        self._hotkey_thread = keyboard.GlobalHotKeys({
+        self._hotkey_thread = pynput_fix_hotkey.GlobalHotKeys({
             hotkey: self.do_move, })
 
     def enable_hotkey(self):
