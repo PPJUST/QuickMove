@@ -40,13 +40,15 @@ def get_default_section():
 
 def set_default_section(section: str):
     """修改默认配置项"""
-    config = configparser.ConfigParser()
-    config.read(CONFIG_FILE, encoding='utf-8')
-    config.set('DEFAULT', 'config', section)
-    config.write(open(CONFIG_FILE, 'w', encoding='utf-8'))
+    # 由于qt下拉框绑定了该函数，导致下拉框清空时会调用该函数，导致添加一个空的section[]，需要单独判断排除
+    if section:
+        config = configparser.ConfigParser()
+        config.read(CONFIG_FILE, encoding='utf-8')
+        config.set('DEFAULT', 'config', section)
+        config.write(open(CONFIG_FILE, 'w', encoding='utf-8'))
 
-    if section not in config:
-        add_section(section)
+        if section not in config:
+            add_section(section)
 
 
 def get_analyse_dirpath():
@@ -92,12 +94,10 @@ def add_section(section: str):
     """添加配置项"""
     config = configparser.ConfigParser()
     config.read(CONFIG_FILE, encoding='utf-8')
-
+    config.set('DEFAULT', 'config', section)
     config.add_section(section)
     for key, value in CONFIG_KEYS.items():
         config.set(section, key, str(value))
-
-    config.set('DEFAULT', 'config', section)
 
     config.write(open(CONFIG_FILE, 'w', encoding='utf-8'))
 
@@ -115,7 +115,8 @@ def delete_section(section: str):
     if sections:
         config.set('DEFAULT', 'config', sections[0])
         config.write(open(CONFIG_FILE, 'w', encoding='utf-8'))
-    else:
+    else:  # 如果删除后无其他配置项，则新增默认项
+        config.write(open(CONFIG_FILE, 'w', encoding='utf-8'))
         check_default_config()
 
 
