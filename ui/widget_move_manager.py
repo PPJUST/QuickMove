@@ -76,6 +76,11 @@ class WidgetMoveManager(QWidget):
             # 在第一个索引时
             if index != 1:
                 self.ui.pushButton_cancel.setEnabled(True)
+        # 无任务时
+        if not self.task_dict:
+            self.ui.pushButton_skip.setEnabled(False)
+            self.ui.pushButton_delete.setEnabled(False)
+            self.ui.pushButton_cancel.setEnabled(False)
 
     def change_folder_count(self):
         """修改目标文件夹数量"""
@@ -105,6 +110,8 @@ class WidgetMoveManager(QWidget):
 
     def move_current(self, target_folder: str):
         """移动当前任务对应的文件"""
+        if not self.task_dict:
+            return
         if self.task_dict.current_index == 0:  # 不在超限时进行移动操作
             return
         current_path = self.task_dict.current_path
