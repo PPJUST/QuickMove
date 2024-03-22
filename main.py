@@ -73,6 +73,8 @@ class Main(QMainWindow):
         """分析路径"""
         # 更新任务字典
         self.task_dict.set_task(extract_paths)
+        # 停用快捷键
+        self.widget_move_manager.set_hotkey_enable(is_enable=False)
         # 更新进度控件组
         self.update_rate()
         # 更新历史记录控件组
@@ -86,6 +88,8 @@ class Main(QMainWindow):
         """修改部分选项后，清空任务，防止不期望的操作"""
         # 清空任务字典
         self.task_dict.set_task([])
+        # 停用快捷键
+        self.widget_move_manager.set_hotkey_enable(is_enable=False)
         # 更新进度控件组
         self.update_rate()
         # 更新历史记录控件组

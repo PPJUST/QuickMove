@@ -46,7 +46,7 @@ class WidgetMoveManager(QWidget):
         self.ui.pushButton_skip.clicked.connect(self.skip_current)
         self.ui.pushButton_cancel.clicked.connect(self.cancel_last)
         self.ui.pushButton_delete.clicked.connect(self.delete_current)
-        self.ui.pushButton_enable_hotkey.clicked.connect(self.set_hotkey_enable)
+        self.ui.pushButton_enable_hotkey.clicked.connect(lambda :self.set_hotkey_enable())
 
     def load_setting(self):
         """加载设置"""
@@ -166,9 +166,12 @@ class WidgetMoveManager(QWidget):
 
         self.check_rate()
 
-    def set_hotkey_enable(self):
+    def set_hotkey_enable(self, is_enable:bool=None):
         """启用或禁用快捷键"""
-        self.is_hotkey_enable = not self.is_hotkey_enable  # 修改状态
+        if is_enable is not None:
+            self.is_hotkey_enable = is_enable
+        else:
+            self.is_hotkey_enable = not self.is_hotkey_enable  # 修改状态
         if self.is_hotkey_enable:  # 启用快捷键
             self.ui.pushButton_enable_hotkey.setIcon(QIcon(ICON_ENABLE))
             self.ui.pushButton_enable_hotkey.setText('快捷键已启用')
