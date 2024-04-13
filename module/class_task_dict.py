@@ -1,5 +1,5 @@
 # 任务清单，用于处理索引、执行具体文件操作等
-import os.path
+import os
 
 from module import function_normal, function_rename_pattern, function_open_file, function_config
 

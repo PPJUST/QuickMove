@@ -1,5 +1,5 @@
 # 单个移动目标文件夹的子控件
-import os.path
+import os
 
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QIcon
