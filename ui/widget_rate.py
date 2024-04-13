@@ -5,7 +5,7 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import *
 
 from constant import ICON_OPEN_FOLDER
-from module import function_open_file
+from module import function_open_file, pynput_fix_hotkey
 from ui.ui_widget_rate import Ui_Form
 
 
@@ -16,6 +16,9 @@ class WidgetRate(QWidget):
         super().__init__()
         self.ui = Ui_Form()
         self.ui.setupUi(self)
+
+        self._hotkey_thread = None
+        self.bind_hotkey()
         # 设置ui属性
         self.ui.toolButton_open_dir.setIcon(QIcon(ICON_OPEN_FOLDER))
         # 连接信号与槽函数
@@ -38,3 +41,19 @@ class WidgetRate(QWidget):
 
     def reset_current_path(self, text):
         self.ui.label_current_path.setText(str(text))
+
+    def bind_hotkey(self):
+        """绑定快捷键"""
+        if self._hotkey_thread:  # 先停止再绑定
+            self._hotkey_thread.stop()
+        self._hotkey_thread = pynput_fix_hotkey.GlobalHotKeysFix({
+            '<alt_gr>+<96>': self.open_dir, })
+
+    def enable_hotkey(self):
+        """启用快捷键"""
+        self.bind_hotkey()  # pynput的监听线程在stop后无法重新start，需要重新绑定
+        self._hotkey_thread.start()
+
+    def disable_hotkey(self):
+        """停用快捷键"""
+        self._hotkey_thread.stop()

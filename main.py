@@ -61,6 +61,7 @@ class Main(QMainWindow):
         self.widget_move_manager.signal_completed.connect(self.complete_task)
         self.widget_move_manager.signal_file_not_exist.connect(self.file_not_exist)
         self.widget_move_manager.signal_file_occupied.connect(self.file_occupied)
+        self.widget_move_manager.signal_hotkey_state.connect(self.set_hotkey_state)
 
     def reload_setting(self):
         """切换配置文件后重新加载设置"""
@@ -162,6 +163,13 @@ class Main(QMainWindow):
         self.textbrowser_history.record_file_occupied(path)
         # 弹出提示窗口（需要实例化）
         self.window_tip = WindowTip('当前文件被占用')
+
+    def set_hotkey_state(self, is_enable):
+        """是否启用其他控件的快捷键"""
+        if is_enable:
+            self.widget_rate.enable_hotkey()
+        else:
+            self.widget_rate.disable_hotkey()
 
 
 if __name__ == '__main__':

@@ -6,7 +6,7 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import *
 
 from constant import ICON_SKIP, ICON_CANCEL, ICON_RECYCLE_BIN, ICON_ENABLE, ICON_DISABLE
-from module import function_config
+from module import function_config, pynput_fix_hotkey
 from module.class_task_dict import TaskDict
 from ui.ui_widget_move_manager import Ui_Form
 from ui.widget_move_folder import WidgetMoveFolder
@@ -21,6 +21,7 @@ class WidgetMoveManager(QWidget):
     signal_file_not_exist = Signal(str)
     signal_completed = Signal()
     signal_file_occupied = Signal(str)
+    signal_hotkey_state = Signal(bool)
 
     def __init__(self):
         super().__init__()
@@ -29,6 +30,7 @@ class WidgetMoveManager(QWidget):
 
         # 初始化
         self.task_dict = None  # 任务清单
+        self._hotkey_thread = None
         # 快捷键设置（默认禁用）
         self.is_hotkey_enable = False
         self.ui.pushButton_enable_hotkey.setIcon(QIcon(ICON_DISABLE))
@@ -46,12 +48,13 @@ class WidgetMoveManager(QWidget):
         self.ui.pushButton_skip.clicked.connect(self.skip_current)
         self.ui.pushButton_cancel.clicked.connect(self.cancel_last)
         self.ui.pushButton_delete.clicked.connect(self.delete_current)
-        self.ui.pushButton_enable_hotkey.clicked.connect(lambda :self.set_hotkey_enable())
+        self.ui.pushButton_enable_hotkey.clicked.connect(lambda: self.set_hotkey_enable())
 
     def load_setting(self):
         """加载设置"""
         self.ui.spinBox_folder_count.setValue(function_config.get_setting_target_dir_count())
         self.change_folder_count()
+        self.bind_hotkey()
 
     def connect_task_dict(self, task_dict: TaskDict):
         """连接任务清单"""
@@ -166,7 +169,7 @@ class WidgetMoveManager(QWidget):
 
         self.check_rate()
 
-    def set_hotkey_enable(self, is_enable:bool=None):
+    def set_hotkey_enable(self, is_enable: bool = None):
         """启用或禁用快捷键"""
         if is_enable is not None:
             self.is_hotkey_enable = is_enable
@@ -176,10 +179,12 @@ class WidgetMoveManager(QWidget):
             self.ui.pushButton_enable_hotkey.setIcon(QIcon(ICON_ENABLE))
             self.ui.pushButton_enable_hotkey.setText('快捷键已启用')
             self.enable_hotkeys()
+            self.signal_hotkey_state.emit(True)
         else:  # 禁用快捷键
             self.ui.pushButton_enable_hotkey.setIcon(QIcon(ICON_DISABLE))
             self.ui.pushButton_enable_hotkey.setText('快捷键已禁用')
             self.disable_hotkeys()
+            self.signal_hotkey_state.emit(False)
 
     def enable_hotkeys(self):
         """启用快捷键"""
@@ -191,6 +196,8 @@ class WidgetMoveManager(QWidget):
                 if widget:
                     widget.enable_hotkey()
 
+        self.enable_hotkey()
+
     def disable_hotkeys(self):
         """禁用快捷键"""
         layout = self.ui.widget_move_folders.layout()
@@ -200,3 +207,25 @@ class WidgetMoveManager(QWidget):
                 widget = item.widget()
                 if widget:
                     widget.disable_hotkey()
+
+        self.disable_hotkey()
+
+    """下面的快捷键方法为界面上的3个button的快捷键，不含移动快捷键"""
+
+    def bind_hotkey(self):
+        """绑定快捷键"""
+        if self._hotkey_thread:  # 先停止再绑定
+            self._hotkey_thread.stop()
+        self._hotkey_thread = pynput_fix_hotkey.GlobalHotKeysFix({
+            '<alt_gr>+<97>': self.skip_current,
+            '<alt_gr>+<98>': self.cancel_last,
+            '<alt_gr>+<99>': self.delete_current, })
+
+    def enable_hotkey(self):
+        """启用快捷键"""
+        self.bind_hotkey()  # pynput的监听线程在stop后无法重新start，需要重新绑定
+        self._hotkey_thread.start()
+
+    def disable_hotkey(self):
+        """停用快捷键"""
+        self._hotkey_thread.stop()
