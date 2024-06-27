@@ -20,7 +20,7 @@ def check_default_config():
         config.set('DEFAULT', 'config', '默认')
         config.set('DEFAULT', 'analyse_dirpath', '')
         for i in range(1, 10):
-            config.set('DEFAULT', f'hotkey_move_{i}', f'<ctrl>+<{i + 96}>')  # 临时快捷键 右ctrl+小数字键盘0~9
+            config.set('DEFAULT', f'hotkey_move_{i}', f'<ctrlright>+<{i + 96}>')  # 临时快捷键 右ctrl+小数字键盘0~9
         config.write(open(CONFIG_FILE, 'w', encoding='utf-8'))
 
     if not config.sections():
