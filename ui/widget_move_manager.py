@@ -219,7 +219,7 @@ class WidgetMoveManager(QWidget):
         self._hotkey_thread = pynput_fix_hotkey.GlobalHotKeysFix({
             '<alt_gr>+<97>': self.skip_current,
             '<alt_gr>+<98>': self.cancel_last,
-            '<ctrlright>+<96>': self.delete_current, })
+            '<ctrl_r>+<96>': self.delete_current, })
 
     def enable_hotkey(self):
         """启用快捷键"""
